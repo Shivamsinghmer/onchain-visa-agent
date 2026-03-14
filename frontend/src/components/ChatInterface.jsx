@@ -6,6 +6,7 @@ import MessageList from './chat/MessageList.jsx';
 import ChatInput from './chat/ChatInput.jsx';
 import RightPanel from './chat/RightPanel.jsx';
 import SuggestionGrid from './chat/SuggestionGrid.jsx';
+import OTPModal from './chat/OTPModal.jsx';
 
 const ChatInterface = () => {
   const { 
@@ -16,7 +17,10 @@ const ChatInterface = () => {
     clearChat,
     applications,
     visas,
-    userEmail
+    userEmail,
+    showOTP,
+    setShowOTP,
+    pendingEmail
   } = useChat();
 
   const [inputText, setInputText] = useState('');
@@ -82,6 +86,16 @@ const ChatInterface = () => {
         rightPanelOpen={rightPanelOpen} 
         activeApplications={applications} 
         activeVisas={visas} 
+      />
+
+      <OTPModal 
+        isOpen={showOTP} 
+        onClose={() => setShowOTP(false)} 
+        onSubmit={(code) => {
+          handleSend(code);
+          setShowOTP(false);
+        }}
+        email={pendingEmail || "your email"}
       />
 
     </div>

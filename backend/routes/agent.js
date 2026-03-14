@@ -9,7 +9,13 @@ router.post('/chat', async (req, res) => {
   let sessionId = req.cookies.sessionId;
   if (!sessionId) {
     sessionId = uuidv4();
-    res.cookie('sessionId', sessionId, { httpOnly: true });
+    res.cookie('sessionId', sessionId, { 
+      httpOnly: true, 
+      secure: false, 
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 3600000 * 24
+    });
   }
 
   const { message } = req.body;

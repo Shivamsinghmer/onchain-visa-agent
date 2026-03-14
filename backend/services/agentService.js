@@ -19,11 +19,16 @@ export async function* runAgentStream(userMessage, sessionId) {
     const pendingEmail = getState(sessionId, 'pendingEmail');
     const isFallback = getState(sessionId, 'isFallback');
     
+    console.log(`[Agent] Session: ${sessionId}, Email: ${email}, Pending: ${pendingEmail}`);
+
     let contextMessage = '';
     if (email) {
       contextMessage = `Current User: **${email}** (Authenticated). You already have the user's email verified.`;
     } else if (pendingEmail) {
-      contextMessage = `User is NOT verified yet, but we have sent an OTP to **${pendingEmail}**. If the user provides a 6-digit code now, call verify_otp("${pendingEmail}", code) immediately. Do NOT ask for their email again.`;
+      contextMessage = `User is NOT verified yet. We just sent an OTP to **${pendingEmail}**. 
+CRITICAL: The user's next message WILL be the 6-digit OTP. 
+IF the user sends 6 digits, IMMEDIATELY call verify_otp("${pendingEmail}", code) and IGNORE all other rules about email validation.
+DO NOT say "That doesn't look like a valid email" if you see 6 digits.`;
     } else {
       contextMessage = `User is not yet authenticated. You MUST ask for their email address first. When they provide it, call send_otp(email).`;
     }
@@ -38,7 +43,7 @@ export async function* runAgentStream(userMessage, sessionId) {
     // 3. Call Groq
     console.log(`[Agent] Calling Groq with ${messages.length} messages...`);
     const stream = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+      model: 'openai/gpt-oss-20b',
       messages,
       tools,
       tool_choice: 'auto',
@@ -85,7 +90,12 @@ export async function* runAgentStream(userMessage, sessionId) {
     
     if (finalToolCalls.length > 0) {
       // Append assistant message with tools to history
-      appendMessage(sessionId, { role: 'assistant', content: currentIterationText || null, tool_calls: finalToolCalls });
+      // Note: Some models (like Llama) prefer empty string over null for content when tool_calls are present
+      appendMessage(sessionId, { 
+        role: 'assistant', 
+        content: currentIterationText || "", 
+        tool_calls: finalToolCalls 
+      });
 
       // Execute tools
       for (const tc of finalToolCalls) {
@@ -101,6 +111,13 @@ export async function* runAgentStream(userMessage, sessionId) {
         yield { type: 'tool_call', name, input: args };
         const result = await callMcpTool(name, args);
         yield { type: 'tool_result', name, result };
+
+        // Handle 401/Unauthorized from any tool
+        const resultStr = String(result).toLowerCase();
+        if (resultStr.includes('401') || resultStr.includes('unauthorized') || resultStr.includes('invalid token')) {
+          console.error(`[Agent] Tool ${name} returned 401/Unauthorized. Clearing session email.`);
+          setEmail(sessionId, null);
+        }
 
         // If verify_otp was successful, update the session email
         if (name === 'send_otp') {

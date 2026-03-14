@@ -10,10 +10,11 @@ export function useChat() {
   const [applications, setApplications] = useState([]);
   const [visas, setVisas] = useState([]);
   const [userEmail, setUserEmail] = useState(null);
+  const [pendingEmail, setPendingEmail] = useState(null);
 
   // Fetch session on load
   useEffect(() => {
-    fetch(`${BASE_URL}/agent/session`)
+    fetch(`${BASE_URL}/agent/session`, { credentials: 'include' })
       .then(res => res.json())
       .then(data => {
         if (data.email) setUserEmail(data.email);
@@ -35,6 +36,7 @@ export function useChat() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ message: text }),
       });
 
@@ -79,6 +81,10 @@ export function useChat() {
 
                 } else if (event.type === 'tool_call') {
                   setActiveToolCall({ name: event.name, input: event.input });
+                  if (event.name === 'send_otp') {
+                    setShowOTP(true);
+                    if (event.input?.email) setPendingEmail(event.input.email);
+                  }
                 } else if (event.type === 'tool_result') {
                   setActiveToolCall(null);
 
@@ -130,7 +136,7 @@ export function useChat() {
                       if (parsedResult.success || parsedResult.token) {
                         // We don't have direct access to tool args here easily unless we store them
                         // However, we can fetch session again or extract from message history
-                        fetch(`${BASE_URL}/agent/session`)
+                        fetch(`${BASE_URL}/agent/session`, { credentials: 'include' })
                           .then(res => res.json())
                           .then(data => {
                             if (data.email) setUserEmail(data.email);
@@ -159,7 +165,10 @@ export function useChat() {
 
   const clearChat = useCallback(async () => {
     try {
-      await fetch(`${BASE_URL}/agent/clear`, { method: 'POST' });
+      await fetch(`${BASE_URL}/agent/clear`, { 
+        method: 'POST',
+        credentials: 'include'
+      });
       setMessages([]);
       setApplications([]);
       setVisas([]);
@@ -179,6 +188,7 @@ export function useChat() {
     setShowOTP,
     applications,
     visas,
-    userEmail
+    userEmail,
+    pendingEmail
   };
 }

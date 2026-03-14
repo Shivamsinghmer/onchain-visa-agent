@@ -23,7 +23,9 @@ export function VisaCard({ visa, onAction }) {
       </div>
 
       <div className="flex justify-between items-center mt-auto pt-4 border-t border-border">
-         <span className="font-mono text-accent font-bold">${visa.price || '?'}</span>
+         <span className="font-mono text-accent font-bold">
+           {visa.price && visa.price !== 0 && visa.price !== '0' ? `$${visa.price}` : '$?'}
+         </span>
          <div className="space-x-2 flex">
            <button onClick={() => onAction(`Tell me more about visa ${visa.id}`)} className="text-xs bg-bg border border-border px-2 py-1 rounded text-text hover:bg-border transition">Details</button>
            <button onClick={() => onAction(`I want to apply for visa ${visa.id}`)} className="text-xs bg-accent text-white px-2 py-1 rounded hover:opacity-90 transition">Apply</button>
