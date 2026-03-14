@@ -15,7 +15,7 @@ let mcpToolsCache = null;
 export async function getMcpClient() {
   if (mcpClient) return mcpClient;
 
-  const mcpServerPath = process.env.MCP_SERVER_PATH || '../mcp-server/dist/index.js';
+  const mcpServerPath = process.env.MCP_SERVER_PATH || '../../mcp-server/dist/index.js';
   const serverPath = path.resolve(__dirname, '..', mcpServerPath);
 
   const transport = new StdioClientTransport({
