@@ -44,7 +44,7 @@ CRITICAL: The user's next message contains the 6-digit OTP code for **${pendingE
     // 3. Call Groq
     console.log(`[Agent] Calling Groq with ${messages.length} messages...`);
     const stream = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+      model: 'openai/gpt-oss-120b',
       messages,
       tools,
       tool_choice: 'auto',
