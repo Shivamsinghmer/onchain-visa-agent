@@ -25,10 +25,11 @@ export async function* runAgentStream(userMessage, sessionId) {
     if (email) {
       contextMessage = `Current User: **${email}** (Authenticated). You already have the user's email verified.`;
     } else if (pendingEmail) {
-      contextMessage = `User is NOT verified yet. We just sent an OTP to **${pendingEmail}**. 
-CRITICAL: The user's next message WILL be the 6-digit OTP. 
-IF the user sends 6 digits, IMMEDIATELY call verify_otp("${pendingEmail}", code) and IGNORE all other rules about email validation.
-DO NOT say "That doesn't look like a valid email" if you see 6 digits.`;
+      contextMessage = `AUTHENTICATION STATUS: Email provided is **${pendingEmail}**. CODE SENT.
+CRITICAL: The user's next message contains the 6-digit OTP code for **${pendingEmail}**.
+1. Call verify_otp(email: "${pendingEmail}", code: "USER_DIGITS") immediately.
+2. DO NOT validate the 6-digit number as an email address.
+3. DO NOT ask for the email again. The email is **${pendingEmail}**.`;
     } else {
       contextMessage = `User is not yet authenticated. You MUST ask for their email address first. When they provide it, call send_otp(email).`;
     }
@@ -43,7 +44,7 @@ DO NOT say "That doesn't look like a valid email" if you see 6 digits.`;
     // 3. Call Groq
     console.log(`[Agent] Calling Groq with ${messages.length} messages...`);
     const stream = await groq.chat.completions.create({
-      model: 'openai/gpt-oss-20b',
+      model: 'llama-3.3-70b-versatile',
       messages,
       tools,
       tool_choice: 'auto',
@@ -90,7 +91,6 @@ DO NOT say "That doesn't look like a valid email" if you see 6 digits.`;
     
     if (finalToolCalls.length > 0) {
       // Append assistant message with tools to history
-      // Note: Some models (like Llama) prefer empty string over null for content when tool_calls are present
       appendMessage(sessionId, { 
         role: 'assistant', 
         content: currentIterationText || "", 
@@ -119,8 +119,11 @@ DO NOT say "That doesn't look like a valid email" if you see 6 digits.`;
           setEmail(sessionId, null);
         }
 
-        // If verify_otp was successful, update the session email
-        if (name === 'send_otp') {
+        // Helper to validate email format before saving to state
+        const isValidEmail = (str) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str);
+
+        // If send_otp was successful, update the pending email
+        if (name === 'send_otp' && args.email && isValidEmail(args.email)) {
           setState(sessionId, 'pendingEmail', args.email);
         }
 
@@ -128,7 +131,7 @@ DO NOT say "That doesn't look like a valid email" if you see 6 digits.`;
           try {
             const data = typeof result === 'string' ? JSON.parse(result) : result;
             if (data.success || data.token) {
-              const verifiedEmail = args.email || pendingEmail;
+              const verifiedEmail = (args.email && isValidEmail(args.email)) ? args.email : pendingEmail;
               setEmail(sessionId, verifiedEmail);
               setState(sessionId, 'pendingEmail', null); // Clear pending
               if (String(result).includes('Fallback Mode')) {
@@ -139,7 +142,7 @@ DO NOT say "That doesn't look like a valid email" if you see 6 digits.`;
             }
           } catch (e) {
             if (result.includes('verified') || result.includes('Success')) {
-              const verifiedEmail = args.email || pendingEmail;
+              const verifiedEmail = (args.email && isValidEmail(args.email)) ? args.email : pendingEmail;
               setEmail(sessionId, verifiedEmail);
               setState(sessionId, 'pendingEmail', null);
               if (result.includes('Fallback')) setState(sessionId, 'isFallback', true);
