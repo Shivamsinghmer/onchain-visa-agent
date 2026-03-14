@@ -36,11 +36,13 @@ const ChatInterface = () => {
     scrollToBottom();
   }, [messages, isStreaming, activeToolCall]);
 
-  const handleSend = (text) => {
+  const handleSend = (text, force = false) => {
     const msg = text || inputText;
-    if (!msg.trim() || isStreaming) return;
-    sendMessage(msg);
-    setInputText('');
+    if (!msg.trim()) return;
+    if (isStreaming && !force) return;
+    
+    sendMessage(msg, force);
+    if (!text) setInputText('');
   };
 
   return (
@@ -92,7 +94,7 @@ const ChatInterface = () => {
         isOpen={showOTP} 
         onClose={() => setShowOTP(false)} 
         onSubmit={(code) => {
-          handleSend(code);
+          handleSend(code, true);
           setShowOTP(false);
         }}
         email={pendingEmail || "your email"}

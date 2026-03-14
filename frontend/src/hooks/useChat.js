@@ -21,8 +21,10 @@ export function useChat() {
       });
   }, []);
 
-  const sendMessage = useCallback(async (text) => {
+  const sendMessage = useCallback(async (text, force = false) => {
     // 1. Immediately add user message
+    if (isStreaming && !force) return;
+
     const userMsg = { id: Date.now(), role: 'user', content: text };
     setMessages((prev) => [...prev, userMsg]);
     setIsStreaming(true);
@@ -159,9 +161,10 @@ export function useChat() {
       }
     } catch (error) {
       console.error('Fetch error:', error);
+    } finally {
       setIsStreaming(false);
     }
-  }, []);
+  }, [isStreaming]);
 
   const clearChat = useCallback(async () => {
     try {

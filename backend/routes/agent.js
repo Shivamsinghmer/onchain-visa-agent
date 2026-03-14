@@ -9,10 +9,11 @@ router.post('/chat', async (req, res) => {
   let sessionId = req.cookies.sessionId;
   if (!sessionId) {
     sessionId = uuidv4();
+    const isProd = process.env.NODE_ENV === 'production' || !!process.env.FRONTEND_URL;
     res.cookie('sessionId', sessionId, { 
       httpOnly: true, 
-      secure: false, 
-      sameSite: 'lax',
+      secure: isProd, 
+      sameSite: isProd ? 'none' : 'lax',
       path: '/',
       maxAge: 3600000 * 24
     });
