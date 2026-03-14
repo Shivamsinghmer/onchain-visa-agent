@@ -11,15 +11,26 @@ export function useChat() {
   const [visas, setVisas] = useState([]);
   const [userEmail, setUserEmail] = useState(null);
   const [pendingEmail, setPendingEmail] = useState(null);
+  const [sessionId, setSessionId] = useState(
+    () => localStorage.getItem('ocity_session_id') || null
+  );
 
   // Fetch session on load
   useEffect(() => {
-    fetch(`${BASE_URL}/agent/session`, { credentials: 'include' })
+    const url = sessionId 
+      ? `${BASE_URL}/agent/session?sessionId=${sessionId}`
+      : `${BASE_URL}/agent/session`;
+
+    fetch(url)
       .then(res => res.json())
       .then(data => {
         if (data.email) setUserEmail(data.email);
+        if (data.sessionId && !sessionId) {
+          setSessionId(data.sessionId);
+          localStorage.setItem('ocity_session_id', data.sessionId);
+        }
       });
-  }, []);
+  }, [sessionId]);
 
   const sendMessage = useCallback(async (text, force = false) => {
     // 1. Immediately add user message
@@ -38,8 +49,7 @@ export function useChat() {
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include',
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify({ message: text, sessionId }),
       });
 
       if (!response.body) throw new Error('No readable stream');
@@ -69,7 +79,10 @@ export function useChat() {
               try {
                 const event = JSON.parse(dataStr);
 
-                if (event.type === 'text') {
+                if (event.type === 'session') {
+                  setSessionId(event.sessionId);
+                  localStorage.setItem('ocity_session_id', event.sessionId);
+                } else if (event.type === 'text') {
                   currentAssistantContent += event.content;
                   setMessages((prev) =>
                     prev.map(m => m.id === assistantMsgId ? { ...m, content: currentAssistantContent } : m)
@@ -132,13 +145,11 @@ export function useChat() {
                     }
 
                     if (event.name === 'verify_otp') {
-                      // parsedResult might be { success: true, message: "..." } or similar
-                      // Usually agentService sends args.email in the tool call
-                      // But let's check if verify_otp result indicates success
                       if (parsedResult.success || parsedResult.token) {
-                        // We don't have direct access to tool args here easily unless we store them
-                        // However, we can fetch session again or extract from message history
-                        fetch(`${BASE_URL}/agent/session`, { credentials: 'include' })
+                        const url = sessionId 
+                          ? `${BASE_URL}/agent/session?sessionId=${sessionId}`
+                          : `${BASE_URL}/agent/session`;
+                        fetch(url)
                           .then(res => res.json())
                           .then(data => {
                             if (data.email) setUserEmail(data.email);
@@ -148,7 +159,6 @@ export function useChat() {
                   }
                 } else if (event.type === 'error') {
                   console.error("Agent error:", event.message);
-                  setIsStreaming(false);
                 } else if (event.type === 'done') {
                   setIsStreaming(false);
                 }
@@ -164,22 +174,27 @@ export function useChat() {
     } finally {
       setIsStreaming(false);
     }
-  }, [isStreaming]);
+  }, [isStreaming, sessionId]);
 
   const clearChat = useCallback(async () => {
     try {
       await fetch(`${BASE_URL}/agent/clear`, { 
         method: 'POST',
-        credentials: 'include'
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ sessionId })
       });
       setMessages([]);
       setApplications([]);
       setVisas([]);
       setUserEmail(null);
+      setSessionId(null);
+      localStorage.removeItem('ocity_session_id');
     } catch (e) {
       console.error(e);
     }
-  }, []);
+  }, [sessionId]);
 
   return {
     messages,
@@ -192,6 +207,7 @@ export function useChat() {
     applications,
     visas,
     userEmail,
-    pendingEmail
+    pendingEmail,
+    sessionId
   };
 }

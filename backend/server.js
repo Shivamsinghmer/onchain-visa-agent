@@ -1,6 +1,5 @@
 import express from 'express';
 import cors from 'cors';
-import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -23,7 +22,6 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
-app.use(cookieParser());
 
 app.use('/api/agent', agentRoutes);
 
