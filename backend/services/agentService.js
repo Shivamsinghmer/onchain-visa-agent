@@ -16,11 +16,17 @@ export async function* runAgentStream(userMessage, sessionId) {
   while (isLooping) {
     const history = getHistory(sessionId);
     const email = getEmail(sessionId);
+    const pendingEmail = getState(sessionId, 'pendingEmail');
     const isFallback = getState(sessionId, 'isFallback');
     
-    let contextMessage = email 
-      ? `Current User: **${email}** (Authenticated). You already have the user's email verified.`
-      : `User is not yet authenticated. If they ask for services requiring authentication (like listing applications or submitting), ask for their email to send an OTP.`;
+    let contextMessage = '';
+    if (email) {
+      contextMessage = `Current User: **${email}** (Authenticated). You already have the user's email verified.`;
+    } else if (pendingEmail) {
+      contextMessage = `User is NOT verified yet, but we have sent an OTP to **${pendingEmail}**. If the user provides a 6-digit code now, call verify_otp("${pendingEmail}", code) immediately. Do NOT ask for their email again.`;
+    } else {
+      contextMessage = `User is not yet authenticated. You MUST ask for their email address first. When they provide it, call send_otp(email).`;
+    }
 
     if (isFallback) {
       contextMessage += ` [SYSTEM NOTE: Fallback Mode is active. The user verified using a local mock code because the staging server was unreachable. Real API calls requiring authentication may still fail with 401/Unauthorized. If this happens, do NOT ask the user to verify their email again; instead, explain that the staging server is currently limited or unreachable.]`;
@@ -32,7 +38,7 @@ export async function* runAgentStream(userMessage, sessionId) {
     // 3. Call Groq
     console.log(`[Agent] Calling Groq with ${messages.length} messages...`);
     const stream = await groq.chat.completions.create({
-      model: 'openai/gpt-oss-20b',
+      model: 'llama-3.3-70b-versatile',
       messages,
       tools,
       tool_choice: 'auto',
@@ -97,11 +103,17 @@ export async function* runAgentStream(userMessage, sessionId) {
         yield { type: 'tool_result', name, result };
 
         // If verify_otp was successful, update the session email
+        if (name === 'send_otp') {
+          setState(sessionId, 'pendingEmail', args.email);
+        }
+
         if (name === 'verify_otp') {
           try {
             const data = typeof result === 'string' ? JSON.parse(result) : result;
             if (data.success || data.token) {
-              setEmail(sessionId, args.email);
+              const verifiedEmail = args.email || pendingEmail;
+              setEmail(sessionId, verifiedEmail);
+              setState(sessionId, 'pendingEmail', null); // Clear pending
               if (String(result).includes('Fallback Mode')) {
                 setState(sessionId, 'isFallback', true);
               } else {
@@ -110,7 +122,9 @@ export async function* runAgentStream(userMessage, sessionId) {
             }
           } catch (e) {
             if (result.includes('verified') || result.includes('Success')) {
-              setEmail(sessionId, args.email);
+              const verifiedEmail = args.email || pendingEmail;
+              setEmail(sessionId, verifiedEmail);
+              setState(sessionId, 'pendingEmail', null);
               if (result.includes('Fallback')) setState(sessionId, 'isFallback', true);
             }
           }
