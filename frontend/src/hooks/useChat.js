@@ -42,7 +42,7 @@ export function useChat() {
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
-      
+
       let doneReading = false;
       let buffer = '';
 
@@ -64,10 +64,10 @@ export function useChat() {
 
               try {
                 const event = JSON.parse(dataStr);
-                
+
                 if (event.type === 'text') {
                   currentAssistantContent += event.content;
-                  setMessages((prev) => 
+                  setMessages((prev) =>
                     prev.map(m => m.id === assistantMsgId ? { ...m, content: currentAssistantContent } : m)
                   );
 
@@ -81,12 +81,12 @@ export function useChat() {
                   setActiveToolCall({ name: event.name, input: event.input });
                 } else if (event.type === 'tool_result') {
                   setActiveToolCall(null);
-                  
+
                   // parse result and optionally attach visas/apps
                   let parsedResult = null;
                   try {
                     parsedResult = JSON.parse(event.result);
-                  } catch(e) {}
+                  } catch (e) { }
 
                   if (parsedResult) {
                     // Update global state based on tool name
@@ -96,7 +96,7 @@ export function useChat() {
                       // Also attach to message for local component needs
                       setMessages(prev => prev.map(m => m.id === assistantMsgId ? { ...m, visas: visaList } : m));
                     }
-                    
+
                     if (event.name === 'get_visa_details') {
                       setVisas([parsedResult]);
                       setMessages(prev => prev.map(m => m.id === assistantMsgId ? { ...m, visas: [parsedResult] } : m));
@@ -139,10 +139,10 @@ export function useChat() {
                     }
                   }
                 } else if (event.type === 'error') {
-                   console.error("Agent error:", event.message);
-                   setIsStreaming(false);
+                  console.error("Agent error:", event.message);
+                  setIsStreaming(false);
                 } else if (event.type === 'done') {
-                   setIsStreaming(false);
+                  setIsStreaming(false);
                 }
               } catch (err) {
                 console.error("Failed to parse SSE event:", err);
@@ -164,7 +164,7 @@ export function useChat() {
       setApplications([]);
       setVisas([]);
       setUserEmail(null);
-    } catch(e) {
+    } catch (e) {
       console.error(e);
     }
   }, []);
