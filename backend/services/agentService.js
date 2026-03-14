@@ -1,0 +1,135 @@
+import Groq from 'groq-sdk';
+import { getMcpToolsForGroq, callMcpTool } from './mcpClient.js';
+import { getHistory, appendMessage, getEmail, setEmail, getState, setState } from './sessionStore.js';
+import { SYSTEM_PROMPT } from './prompts.js';
+
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+export async function* runAgentStream(userMessage, sessionId) {
+  // 1. Append user message to session history
+  appendMessage(sessionId, { role: 'user', content: userMessage });
+  
+  // 2. Fetch tools from MCP
+  const tools = await getMcpToolsForGroq();
+
+  let isLooping = true;
+  while (isLooping) {
+    const history = getHistory(sessionId);
+    const email = getEmail(sessionId);
+    const isFallback = getState(sessionId, 'isFallback');
+    
+    let contextMessage = email 
+      ? `Current User: **${email}** (Authenticated). You already have the user's email verified.`
+      : `User is not yet authenticated. If they ask for services requiring authentication (like listing applications or submitting), ask for their email to send an OTP.`;
+
+    if (isFallback) {
+      contextMessage += ` [SYSTEM NOTE: Fallback Mode is active. The user verified using a local mock code because the staging server was unreachable. Real API calls requiring authentication may still fail with 401/Unauthorized. If this happens, do NOT ask the user to verify their email again; instead, explain that the staging server is currently limited or unreachable.]`;
+    }
+
+    const contextPrompt = { role: 'system', content: contextMessage };
+    const messages = [SYSTEM_PROMPT, contextPrompt, ...history];
+
+    // 3. Call Groq
+    console.log(`[Agent] Calling Groq with ${messages.length} messages...`);
+    const stream = await groq.chat.completions.create({
+      model: 'openai/gpt-oss-20b',
+      messages,
+      tools,
+      tool_choice: 'auto',
+      stream: true
+    });
+
+    let currentIterationText = '';
+    const toolCallsMap = new Map();
+    let finishReason = null;
+
+    // 4. Stream tokens
+    for await (const chunk of stream) {
+      const choice = chunk.choices[0];
+      const delta = choice?.delta || {};
+
+      if (delta.content) {
+        currentIterationText += delta.content;
+      }
+
+      if (delta.tool_calls) {
+        for (const tc of delta.tool_calls) {
+          if (!toolCallsMap.has(tc.index)) {
+            toolCallsMap.set(tc.index, {
+              id: tc.id || '',
+              type: 'function',
+              function: { name: tc.function?.name || '', arguments: tc.function?.arguments || '' }
+            });
+          } else {
+            const existing = toolCallsMap.get(tc.index);
+            if (tc.id) existing.id += tc.id;
+            if (tc.function?.name) existing.function.name += tc.function.name;
+            if (tc.function?.arguments) existing.function.arguments += tc.function.arguments;
+          }
+        }
+      }
+
+      if (choice?.finish_reason) {
+        finishReason = choice.finish_reason;
+      }
+    }
+
+    const finalToolCalls = Array.from(toolCallsMap.values());
+    console.log(`[Agent] Groq finished. Tool calls: ${finalToolCalls.length}, Finish reason: ${finishReason}`);
+    
+    if (finalToolCalls.length > 0) {
+      // Append assistant message with tools to history
+      appendMessage(sessionId, { role: 'assistant', content: currentIterationText || null, tool_calls: finalToolCalls });
+
+      // Execute tools
+      for (const tc of finalToolCalls) {
+        const name = tc.function.name;
+        let args = {};
+        try {
+          args = tc.function.arguments ? JSON.parse(tc.function.arguments) : {};
+        } catch (e) {
+          console.error("[Agent] Failed to parse tool arguments:", e);
+        }
+
+        console.log(`[Agent] Calling tool: ${name}`);
+        yield { type: 'tool_call', name, input: args };
+        const result = await callMcpTool(name, args);
+        yield { type: 'tool_result', name, result };
+
+        // If verify_otp was successful, update the session email
+        if (name === 'verify_otp') {
+          try {
+            const data = typeof result === 'string' ? JSON.parse(result) : result;
+            if (data.success || data.token) {
+              setEmail(sessionId, args.email);
+              if (String(result).includes('Fallback Mode')) {
+                setState(sessionId, 'isFallback', true);
+              } else {
+                setState(sessionId, 'isFallback', false);
+              }
+            }
+          } catch (e) {
+            if (result.includes('verified') || result.includes('Success')) {
+              setEmail(sessionId, args.email);
+              if (result.includes('Fallback')) setState(sessionId, 'isFallback', true);
+            }
+          }
+        }
+
+        appendMessage(sessionId, {
+          role: 'tool',
+          tool_call_id: tc.id,
+          name: name,
+          content: String(result)
+        });
+      }
+    } else {
+      // Final response
+      let finalContent = currentIterationText || "How can I help you today?";
+      yield { type: 'text', content: finalContent };
+      appendMessage(sessionId, { role: 'assistant', content: finalContent });
+      yield { type: 'done' };
+      isLooping = false;
+    }
+  }
+}
