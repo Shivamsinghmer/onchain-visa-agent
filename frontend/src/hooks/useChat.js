@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 
+const BASE_URL = `${import.meta.env.VITE_BACKEND_URL || ''}/api`;
+
 export function useChat() {
   const [messages, setMessages] = useState([]);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -11,7 +13,7 @@ export function useChat() {
 
   // Fetch session on load
   useEffect(() => {
-    fetch('/api/agent/session')
+    fetch(`${BASE_URL}/agent/session`)
       .then(res => res.json())
       .then(data => {
         if (data.email) setUserEmail(data.email);
@@ -28,7 +30,7 @@ export function useChat() {
     let currentAssistantContent = '';
 
     try {
-      const response = await fetch('/api/agent/chat', {
+      const response = await fetch(`${BASE_URL}/agent/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -128,7 +130,7 @@ export function useChat() {
                       if (parsedResult.success || parsedResult.token) {
                         // We don't have direct access to tool args here easily unless we store them
                         // However, we can fetch session again or extract from message history
-                        fetch('/api/agent/session')
+                        fetch(`${BASE_URL}/agent/session`)
                           .then(res => res.json())
                           .then(data => {
                             if (data.email) setUserEmail(data.email);
@@ -157,7 +159,7 @@ export function useChat() {
 
   const clearChat = useCallback(async () => {
     try {
-      await fetch('/api/agent/clear', { method: 'POST' });
+      await fetch(`${BASE_URL}/agent/clear`, { method: 'POST' });
       setMessages([]);
       setApplications([]);
       setVisas([]);
