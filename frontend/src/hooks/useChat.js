@@ -159,6 +159,10 @@ export function useChat() {
                   }
                 } else if (event.type === 'error') {
                   console.error("Agent error:", event.message);
+                  setMessages((prev) =>
+                    prev.map(m => m.id === assistantMsgId ? { ...m, content: `Error: ${event.message}` } : m)
+                  );
+                  setIsStreaming(false);
                 } else if (event.type === 'done') {
                   setIsStreaming(false);
                 }
