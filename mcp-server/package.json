@@ -10,9 +10,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.6.0",
-    "node-fetch": "^3.3.2"
-  },
-  "devDependencies": {
+    "node-fetch": "^3.3.2",
     "@types/node": "^20.0.0",
     "typescript": "^5.0.0"
   }
