@@ -5,19 +5,31 @@ import { clearHistory, getEmail } from '../services/sessionStore.js';
 
 const router = express.Router();
 
+// Always use secure cross-origin cookie settings on Render
+const IS_PROD = process.env.NODE_ENV === 'production' 
+  || !!process.env.RENDER 
+  || !!process.env.FRONTEND_URL;
+
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: IS_PROD,
+  sameSite: IS_PROD ? 'none' : 'lax',
+  path: '/',
+  maxAge: 3600000 * 24 // 24 hours
+};
+
 router.post('/chat', async (req, res) => {
   let sessionId = req.cookies.sessionId;
+
   if (!sessionId) {
     sessionId = uuidv4();
-    const isProd = process.env.NODE_ENV === 'production' || !!process.env.FRONTEND_URL;
-    res.cookie('sessionId', sessionId, { 
-      httpOnly: true, 
-      secure: isProd, 
-      sameSite: isProd ? 'none' : 'lax',
-      path: '/',
-      maxAge: 3600000 * 24
-    });
+    console.log(`[Session] New session created: ${sessionId}`);
+  } else {
+    console.log(`[Session] Existing session reused: ${sessionId}`);
   }
+
+  // Always re-set the cookie to keep it alive
+  res.cookie('sessionId', sessionId, COOKIE_OPTIONS);
 
   const { message } = req.body;
   if (!message) {
@@ -27,19 +39,18 @@ router.post('/chat', async (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering on Render
 
   try {
     const stream = runAgentStream(message, sessionId);
-    
-    // Flag to stop if client disconnects
+
     let disconnected = false;
-    res.on('close', () => { 
-      disconnected = true; 
+    req.on('close', () => {
+      disconnected = true;
     });
 
     for await (const chunk of stream) {
       if (disconnected) break;
-      
       const payload = `data: ${JSON.stringify(chunk)}\n\n`;
       res.write(payload);
       if (res.flush) res.flush();
@@ -56,18 +67,22 @@ router.post('/chat', async (req, res) => {
 
 router.get('/session', (req, res) => {
   const sessionId = req.cookies.sessionId;
+  console.log(`[Session] GET /session — sessionId: ${sessionId}`);
   if (!sessionId) {
-    return res.json({ email: null });
+    return res.json({ email: null, sessionId: null });
   }
   const email = getEmail(sessionId);
-  res.json({ email });
+  res.json({ email, sessionId });
 });
 
 router.post('/clear', (req, res) => {
   const sessionId = req.cookies.sessionId;
   if (sessionId) {
     clearHistory(sessionId);
+    console.log(`[Session] Cleared session: ${sessionId}`);
   }
+  // Clear the cookie too
+  res.clearCookie('sessionId', COOKIE_OPTIONS);
   res.json({ success: true });
 });
 
