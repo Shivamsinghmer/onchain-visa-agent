@@ -18,6 +18,8 @@ export async function getMcpClient() {
   const mcpServerPath = process.env.MCP_SERVER_PATH || '../../mcp-server/dist/index.js';
   const serverPath = path.resolve(__dirname, '..', mcpServerPath);
 
+  console.log(`[MCP Client] Spawning MCP server at: ${serverPath}`);
+
   const transport = new StdioClientTransport({
     command: 'node',
     args: [serverPath],
@@ -28,26 +30,43 @@ export async function getMcpClient() {
     }
   });
 
-  mcpClient = new Client(
+  const client = new Client(
     { name: 'mcp-client', version: '1.0.0' },
     { capabilities: {} }
   );
 
-  await mcpClient.connect(transport);
+  // Connection with timeout
+  const connectPromise = client.connect(transport);
+  const timeoutPromise = new Promise((_, reject) => 
+    setTimeout(() => reject(new Error('MCP connection timeout')), 10000)
+  );
+
+  try {
+    await Promise.race([connectPromise, timeoutPromise]);
+    console.log('MCP Client connected successfully.');
+  } catch (error) {
+    console.error('Failed to connect to MCP server:', error);
+    throw error;
+  }
+
+  mcpClient = client;
 
   transport.onclose = () => {
     console.warn('MCP transport closed. Reconnecting on next request...');
     mcpClient = null;
-    mcpToolsCache = null;
+    // We keep mcpToolsCache to avoid failing completely if MCP is down
   };
 
   transport.onerror = (error) => {
     console.error('MCP transport error:', error);
   };
 
-  const toolsList = await mcpClient.listTools();
-  console.log(`[MCP Client] Raw tools list received from MCP server:`, JSON.stringify(toolsList, null, 2));
-  console.log(`MCP Client connected. Discovered ${toolsList.tools.length} tools.`);
+  try {
+    const toolsList = await mcpClient.listTools();
+    console.log(`MCP Client discovered ${toolsList.tools.length} tools.`);
+  } catch (err) {
+    console.error('Failed to list tools during connection:', err);
+  }
 
   return mcpClient;
 }
@@ -55,17 +74,29 @@ export async function getMcpClient() {
 export async function getMcpToolsForGroq() {
   if (mcpToolsCache) return mcpToolsCache;
 
-  const client = await getMcpClient();
-  const listToolsResult = await client.listTools();
+  try {
+    const client = await getMcpClient();
+    
+    // listTools with timeout
+    const listToolsPromise = client.listTools();
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('MCP listTools timeout')), 5000)
+    );
 
-  mcpToolsCache = listToolsResult.tools.map(tool => ({
-    type: 'function',
-    function: {
-      name: tool.name,
-      description: tool.description,
-      parameters: tool.inputSchema || { type: 'object', properties: {} }
-    }
-  }));
+    const listToolsResult = await Promise.race([listToolsPromise, timeoutPromise]);
+
+    mcpToolsCache = listToolsResult.tools.map(tool => ({
+      type: 'function',
+      function: {
+        name: tool.name,
+        description: tool.description,
+        parameters: tool.inputSchema || { type: 'object', properties: {} }
+      }
+    }));
+  } catch (err) {
+    console.error('Failed to get tools from MCP. Continuing without tools.', err);
+    return []; // Return empty tools instead of hanging
+  }
 
   return mcpToolsCache;
 }

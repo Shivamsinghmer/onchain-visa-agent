@@ -1,12 +1,12 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import agentRoutes from './routes/agent.js';
 import { getMcpClient } from './services/mcpClient.js';
-
-dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -39,4 +39,3 @@ async function startServer() {
 }
 
 startServer();
-

@@ -28,21 +28,28 @@ router.post('/chat', async (req, res) => {
   res.write(`data: ${JSON.stringify({ type: 'session', sessionId })}\n\n`);
 
   try {
+    console.log(`[Route] Creating agent stream for message: "${message}"`);
     const stream = runAgentStream(message, sessionId);
+    console.log(`[Route] Agent stream created, starting iteration...`);
 
-    let disconnected = false;
-    req.on('close', () => {
-      disconnected = true;
-    });
-
+    let chunkCount = 0;
     for await (const chunk of stream) {
-      if (disconnected) break;
+      chunkCount++;
+      console.log(`[Route] Received chunk #${chunkCount}:`, JSON.stringify(chunk).substring(0, 200));
+      
+      // Stop writing if connection is truly dead
+      if (res.socket?.destroyed) {
+        console.log(`[Route] Socket destroyed, stopping stream`);
+        break;
+      }
+      
       const payload = `data: ${JSON.stringify(chunk)}\n\n`;
       res.write(payload);
       if (res.flush) res.flush();
     }
+    console.log(`[Route] Stream finished. Total chunks: ${chunkCount}`);
   } catch (error) {
-    console.error('Error in agent loop:', error);
+    console.error('[Route] Error in agent loop:', error);
     if (!res.writableEnded) {
       res.write(`data: ${JSON.stringify({ type: 'error', message: error.message || 'Unknown error' })}\n\n`);
     }
