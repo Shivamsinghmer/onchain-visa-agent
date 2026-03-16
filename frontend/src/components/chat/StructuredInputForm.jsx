@@ -1,65 +1,56 @@
 import React, { useState } from 'react';
 
-const StructuredInputForm = ({ fields, onSubmit, isSubmitted }) => {
+const StructuredInputForm = ({ fields, onSubmit, isSubmitted, disabled }) => {
   const [formData, setFormData] = useState({});
+
+  const handleChange = (label, value, uppercase) => {
+    setFormData(prev => ({
+      ...prev,
+      [label]: uppercase ? value.toUpperCase() : value
+    }));
+  };
 
   if (isSubmitted) {
     return (
-      <div className="mt-2 flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-600 rounded-full text-[10px] font-black uppercase tracking-widest w-fit border border-green-100 animate-in fade-in slide-in-from-bottom-2">
-        <span>✓ Submitted</span>
+      <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#10B981]/10 text-[#10B981] rounded-full text-xs font-black uppercase tracking-widest animate-in fade-in zoom-in duration-500">
+        <span className="text-sm">✓</span> Submitted
       </div>
     );
   }
 
-  if (!fields || fields.length === 0) return null;
-
-  const handleInputChange = (label, value, uppercase) => {
-    let finalValue = value;
-    if (uppercase) finalValue = value.toUpperCase();
-    setFormData(prev => ({ ...prev, [label]: finalValue }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (Object.keys(formData).length === 0) return;
-    onSubmit(formData);
-  };
-
   return (
-    <form 
-      onSubmit={handleSubmit}
-      className="bg-white rounded-2xl border border-gray-100 shadow-md p-4 md:p-5 mt-2 max-w-full animate-in fade-in zoom-in-95 duration-300"
-    >
-      <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#0A1628] mb-4 flex items-center gap-2">
-        <span className="w-1.5 h-3.5 rounded-full bg-[#4F6EF7]"></span>
-        Fill in your details
-      </h4>
+    <div className={`bg-white shadow-sm border border-gray-100 rounded-2xl p-6 w-full max-w-md animate-in fade-in slide-in-from-bottom-2 duration-500 ${disabled ? 'opacity-50 grayscale pointer-events-none' : 'hover:shadow-md'} transition-all`}>
+      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#0A1628] mb-6">Details Required</h3>
       
-      <div className="space-y-4">
+      <div className="space-y-5">
         {fields.map((field, idx) => (
-          <div key={idx} className="flex flex-col">
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">
+          <div key={idx} className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
               {field.label}
             </label>
             <input
-              type={field.type}
-              placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
-              className="w-full bg-[#F8F9FF] border border-gray-100 rounded-xl px-4 py-3 text-sm font-medium text-[#0A1628] focus:outline-none focus:ring-2 focus:ring-[#4F6EF7]/20 focus:border-[#4F6EF7] transition-all placeholder:text-gray-300 min-h-[48px]"
-              value={formData[field.originalLabel] || ''}
-              onChange={(e) => handleInputChange(field.originalLabel, e.target.value, field.uppercase)}
-              required
+              type={field.type === 'date' ? 'date' : field.type === 'number' ? 'number' : field.type === 'tel' ? 'tel' : 'text'}
+              placeholder={`Enter ${field.label.toLowerCase()}...`}
+              value={formData[field.label] || ''}
+              onChange={(e) => handleChange(field.label, e.target.value, field.uppercase)}
+              className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm text-[#0A1628] outline-none focus:ring-2 focus:ring-[#4F6EF7]/10 focus:border-[#4F6EF7]/30 transition-all font-medium"
             />
           </div>
         ))}
       </div>
 
       <button
-        type="submit"
-        className="w-full bg-[#0A1628] text-white rounded-xl py-3.5 text-sm font-black uppercase tracking-widest mt-6 hover:bg-[#1a2940] transition-all shadow-lg shadow-[#0A1628]/20 flex items-center justify-center gap-2 group active:scale-[0.98] min-h-[50px]"
+        onClick={() => onSubmit(formData)}
+        disabled={fields.some(f => !formData[f.label])}
+        className="w-full mt-8 h-12 bg-[#0A1628] text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg shadow-[#0A1628]/10 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-20 transition-all"
       >
-        Send <span className="text-lg leading-none group-hover:translate-x-1 transition-transform">→</span>
+        Send Details
       </button>
-    </form>
+
+      {disabled && (
+        <p className="text-[9px] font-medium text-gray-400 text-center mt-3 uppercase tracking-wider">Active on latest message only</p>
+      )}
+    </div>
   );
 };
 

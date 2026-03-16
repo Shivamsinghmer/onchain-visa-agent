@@ -7,20 +7,31 @@
 :root {
   --primary: #0A1628;
   --accent: #4F6EF7;
+  --accent-light: #8096f9;
   --bg: #F8F9FF;
   --card: #FFFFFF;
   --text: #1A1A2E;
   --muted: #6B7280;
   --success: #10B981;
+  --glass: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.2);
 }
 
 @layer base {
-  html, body {
+
+  html,
+  body {
     @apply bg-[#F8F9FF] text-[#1A1A2E] font-sans overflow-x-hidden;
     width: 100%;
-    position: relative;
+    position: relative
   }
-  h1, h2, h3, h4, h5, h6 {
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-serif;
   }
 }
@@ -29,33 +40,75 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
   .font-serif {
     font-family: 'Playfair Display', serif;
   }
+
   .font-sans {
     font-family: 'DM Sans', sans-serif;
   }
+
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
+
   .animate-infinite-scroll {
     animation: infinite-scroll 25s linear infinite;
+  }
+
+  .glass {
+    @apply backdrop-blur-md bg-white/70 border border-white/20;
+  }
+
+  .glass-dark {
+    @apply backdrop-blur-md bg-[#0A1628]/80 border border-white/10;
+  }
+
+  .mesh-bg {
+    background-color: #f8f9ff;
+    background-image:
+      radial-gradient(at 0% 0%, hsla(227, 100%, 94%, 1) 0, transparent 50%),
+      radial-gradient(at 50% 0%, hsla(227, 90%, 96%, 1) 0, transparent 50%),
+      radial-gradient(at 100% 0%, hsla(227, 80%, 94%, 1) 0, transparent 50%);
+  }
+
+  .shadow-premium {
+    box-shadow: 0 10px 30px -10px rgba(10, 22, 40, 0.08);
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#0A1628] to-[#4F6EF7];
   }
 }
 
 @keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-20px); }
-  100% { transform: translateY(0px); }
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-20px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
 }
 
 @keyframes infinite-scroll {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
 }
 
 .pulse-btn:hover {
@@ -63,7 +116,15 @@
 }
 
 @keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(79, 110, 247, 0.4); }
-  70% { box-shadow: 0 0 0 10px rgba(79, 110, 247, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(79, 110, 247, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(79, 110, 247, 0.4);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px rgba(79, 110, 247, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(79, 110, 247, 0);
+  }
 }

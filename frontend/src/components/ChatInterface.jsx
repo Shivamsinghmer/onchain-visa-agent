@@ -20,7 +20,10 @@ const ChatInterface = () => {
     userEmail,
     showOTP,
     setShowOTP,
-    pendingEmail
+    pendingEmail,
+    submittedForms,
+    setSubmittedForms,
+    dismissedForms
   } = useChat();
 
   const [inputText, setInputText] = useState('');
@@ -78,7 +81,7 @@ const ChatInterface = () => {
   };
 
   return (
-    <div className="flex h-screen bg-[#F8F9FF] font-sans text-[#1A1A2E] overflow-hidden relative">
+    <div className="flex h-screen mesh-bg font-sans text-[#1A1A2E] overflow-hidden relative">
       
       {/* Sidebar Overlay (Mobile/Tablet) */}
       <div 
@@ -89,10 +92,10 @@ const ChatInterface = () => {
       />
       
       {/* Sidebar Panel Container */}
-      <div className={`fixed lg:relative z-[70] lg:z-0 h-full transition-all duration-300 ease-in-out w-64 flex-shrink-0 ${
+      <div className={`fixed lg:relative z-[70] lg:z-0 h-full transition-all duration-300 ease-in-out flex-shrink-0 ${
         sidebarOpen 
-          ? 'translate-x-0 visible' 
-          : '-translate-x-full invisible lg:translate-x-0 lg:visible'
+          ? 'w-64 translate-x-0 visible opacity-100' 
+          : 'w-0 -translate-x-full invisible opacity-0 lg:w-0 lg:-translate-x-full'
       }`}>
         <ChatSidebar 
           messages={messages} 
@@ -124,6 +127,9 @@ const ChatInterface = () => {
               activeToolCall={activeToolCall} 
               handleSend={handleSend} 
               messagesEndRef={messagesEndRef} 
+              submittedForms={submittedForms}
+              setSubmittedForms={setSubmittedForms}
+              dismissedForms={dismissedForms}
             />
           )}
         </div>
@@ -145,10 +151,10 @@ const ChatInterface = () => {
       />
       
       {/* Right Panel Container */}
-      <div className={`fixed xl:relative z-[70] xl:z-0 right-0 h-full transition-all duration-300 ease-in-out w-80 flex-shrink-0 ${
+      <div className={`fixed xl:relative z-[70] xl:z-0 right-0 h-full transition-all duration-300 ease-in-out flex-shrink-0 ${
         rightPanelOpen 
-          ? 'translate-x-0 visible' 
-          : 'translate-x-full invisible xl:translate-x-0 xl:visible'
+          ? 'w-80 translate-x-0 visible opacity-100' 
+          : 'w-0 translate-x-full invisible opacity-0 xl:w-0 xl:translate-x-full'
       }`}>
         <RightPanel 
           rightPanelOpen={rightPanelOpen} 

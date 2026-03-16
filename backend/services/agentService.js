@@ -83,11 +83,14 @@ Explain that staging server has limited functionality if protected calls fail.]`
       }
 
       const contextPrompt = { role: 'system', content: contextMessage };
-      const messages = [SYSTEM_PROMPT, contextPrompt, ...history];
+      const messages = [
+        SYSTEM_PROMPT, 
+        contextPrompt, 
+        ...history.slice(-25) 
+      ];
 
       console.log(`[Agent] Calling Groq with ${messages.length} messages...`);
 
-      // ── Call Groq ────────────────────────────────────────────────────────
       let stream;
       try {
         stream = await groq.chat.completions.create({

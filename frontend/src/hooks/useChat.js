@@ -14,6 +14,117 @@ export function useChat() {
   const [sessionId, setSessionId] = useState(
     () => localStorage.getItem('ocity_session_id') || null
   );
+  const [submittedForms, setSubmittedForms] = useState(new Set());
+  const [dismissedForms, setDismissedForms] = useState(new Set());
+
+  const FIELD_TYPE_MAP = {
+    "full name": { label: "Full Name", type: "text" },
+    "date of birth": { label: "Date of Birth", type: "date" },
+    "passport": { label: "Passport Number", type: "text", uppercase: true },
+    "nationality": { label: "Your Nationality", type: "text" },
+    "country": { label: "Destination Country", type: "text" },
+    "visa type": { label: "Visa Category", type: "text" },
+    "travel date": { label: "Travel Start Date", type: "date" },
+    "return date": { label: "Return Date", type: "date" },
+    "departure date": { label: "Departure Date", type: "date" },
+    "check-in": { label: "Check-in Date", type: "date" },
+    "check-out": { label: "Check-out Date", type: "date" },
+    "purpose": { label: "Purpose of Visit", type: "text" },
+    "phone number": { label: "Phone Number", type: "tel" },
+    "address": { label: "Full Address", type: "text" },
+    "accommodation": { label: "Accommodation Details", type: "text" },
+    "number of guests": { label: "Number of Guests", type: "number" },
+    "rooms": { label: "Number of Rooms", type: "number" },
+    "adults": { label: "Number of Adults", type: "number" }
+  };
+
+  const extractFieldsFromContent = (content) => {
+    if (!content) return null;
+    const lower = content.toLowerCase();
+    
+    // Exclude confirmation/status messages
+    if (
+      lower.includes("yes/no") || 
+      lower.includes("confirm to submit") || 
+      lower.includes("confirm yes") ||
+      lower.includes("reply yes") ||
+      lower.includes("say yes") ||
+      lower.includes("processing") || 
+      lower.includes("success") ||
+      lower.includes("completed")
+    ) return null;
+
+    const sections = content.split('\n\n');
+    const detectedFields = [];
+    const seenLabels = new Set();
+    
+    sections.forEach(section => {
+      const sectionLower = section.toLowerCase();
+      // Skip sections that list already provided information
+      if (sectionLower.includes("already provided") || sectionLower.includes("you provided") || sectionLower.includes("received your")) {
+        return;
+      }
+
+      const lines = section.split('\n');
+      lines.forEach(line => {
+        const trimmed = line.trim();
+        if (!trimmed) return;
+
+        // Detect bullet points or numbered lists
+        if (/^[•\-\*\d\.\)\s]+/.test(trimmed)) {
+          const lineText = trimmed.replace(/^[•\-\*\d\.\)\s]+/, '').trim();
+          if (!lineText || lineText.length < 3) return;
+
+          const lineLower = lineText.toLowerCase();
+
+          // If a line contains a colon followed by a value (not just a label), it's a restatement
+          // e.g. "Date of birth: 2006-11-03" -> skip
+          if (lineText.includes(':')) {
+            const parts = lineText.split(':');
+            const valuePart = parts.slice(1).join(':').trim();
+            if (valuePart.length > 0 && !valuePart.includes('YYYY') && !valuePart.includes('XXXX')) return;
+          }
+
+          const isRequestPrefix = /^(what|provide|enter|which|your|tell|input|please|departure|return|travel|date|passport|full name|nationality|purpose|accommodation|phone|address)/i.test(lineText);
+          const hasQuestionMark = lineText.includes('?');
+          const isKnownField = Object.keys(FIELD_TYPE_MAP).some(k => lineLower.includes(k));
+          
+          // Exclude lines that look like document checklists rather than data input
+          const isChecklist = lineLower.includes("copy of") || lineLower.includes("page of") || lineLower.includes("photograph");
+          
+          if ((hasQuestionMark || isRequestPrefix || isKnownField) && !isChecklist) {
+            const matchKey = Object.keys(FIELD_TYPE_MAP).find(k => lineLower.includes(k));
+            let fieldToAdd = null;
+
+            if (matchKey) {
+              fieldToAdd = {
+                originalLabel: lineText,
+                label: FIELD_TYPE_MAP[matchKey].label,
+                type: FIELD_TYPE_MAP[matchKey].type,
+                uppercase: FIELD_TYPE_MAP[matchKey].uppercase || false
+              };
+            } else if (hasQuestionMark) {
+              const labelStr = lineText.split('?')[0].trim();
+              fieldToAdd = {
+                originalLabel: lineText,
+                label: labelStr.length > 30 ? labelStr.substring(0, 27) + "..." : labelStr,
+                type: "text"
+              };
+            }
+
+            if (fieldToAdd && !seenLabels.has(fieldToAdd.label)) {
+              detectedFields.push(fieldToAdd);
+              seenLabels.add(fieldToAdd.label);
+            }
+          }
+        }
+      });
+    });
+
+    if (detectedFields.length >= 2) return detectedFields;
+    if (detectedFields.length === 1 && /date|passport number|visa type|full name|nationality/i.test(content.toLowerCase())) return detectedFields;
+    return null;
+  };
 
   // Fetch session on load
   useEffect(() => {
@@ -37,6 +148,15 @@ export function useChat() {
     if (isStreaming && !force) return;
 
     const userMsg = { id: Date.now(), role: 'user', content: text };
+    
+    // Auto-dismiss the latest form if user sends a message manually
+    if (!force) {
+      const lastAssistantForm = [...messages].reverse().find(m => m.role === 'assistant' && m.formFields);
+      if (lastAssistantForm) {
+        setDismissedForms(prev => new Set(prev).add(lastAssistantForm.id));
+      }
+    }
+
     setMessages((prev) => [...prev, userMsg]);
     setIsStreaming(true);
 
@@ -165,6 +285,16 @@ export function useChat() {
                   );
                   setIsStreaming(false);
                 } else if (event.type === 'done') {
+                  setMessages(prev => {
+                    const lastMsg = prev[prev.length - 1];
+                    if (lastMsg && lastMsg.role === 'assistant') {
+                      const fields = extractFieldsFromContent(lastMsg.content);
+                      if (fields) {
+                        return prev.map(m => m.id === lastMsg.id ? { ...m, formFields: fields } : m);
+                      }
+                    }
+                    return prev;
+                  });
                   setIsStreaming(false);
                 }
               } catch (err) {
@@ -213,6 +343,9 @@ export function useChat() {
     visas,
     userEmail,
     pendingEmail,
-    sessionId
+    sessionId,
+    submittedForms,
+    setSubmittedForms,
+    dismissedForms
   };
 }

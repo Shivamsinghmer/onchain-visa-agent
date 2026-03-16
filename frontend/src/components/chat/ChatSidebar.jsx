@@ -6,7 +6,7 @@ const ChatSidebar = ({ messages, sidebarOpen, clearChat, applications, userEmail
   return (
     <aside className="h-full w-64 bg-[#F1F3FF] border-r border-gray-200 flex flex-col relative overflow-hidden">
       {/* Mobile Close Button */}
-      <button 
+      <button
         onClick={() => setSidebarOpen?.(false)}
         className="absolute top-4 right-4 lg:hidden p-2 text-[#6B7280] hover:text-[#0A1628] transition-all z-50 min-w-[44px] min-h-[44px] flex items-center justify-center bg-white/50 backdrop-blur-sm rounded-lg"
       >
@@ -14,7 +14,7 @@ const ChatSidebar = ({ messages, sidebarOpen, clearChat, applications, userEmail
       </button>
 
       <div className="p-6">
-        <button 
+        <button
           onClick={() => navigate('/')}
           className="flex items-center gap-2 text-[#0A1628] font-serif font-black text-xl mb-8 group"
         >
@@ -22,7 +22,7 @@ const ChatSidebar = ({ messages, sidebarOpen, clearChat, applications, userEmail
           <span>OnchainCity</span>
         </button>
 
-        <button 
+        <button
           onClick={clearChat}
           className="w-full h-12 px-4 rounded-xl bg-[#0A1628] text-white text-sm font-bold shadow-lg shadow-[#0A1628]/20 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all"
         >

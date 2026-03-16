@@ -1,17 +1,27 @@
-const MessageList = ({ messages, isStreaming, activeToolCall, handleSend, messagesEndRef }) => {
+import React from 'react';
+import { VisaCard } from '../VisaCard.jsx';
+import { ApplicationCard } from '../ApplicationCard.jsx';
+import StructuredInputForm from './StructuredInputForm.jsx';
+
+const MessageList = ({ messages, isStreaming, activeToolCall, handleSend, messagesEndRef, submittedForms, setSubmittedForms, dismissedForms }) => {
+  const lastFormMsgId = [...messages].reverse().find(m => m.role === 'assistant' && m.formFields)?.id;
+  
   return (
-    <div className="flex-1 overflow-y-auto p-4 md:p-10 space-y-6 md:space-y-8 scroll-smooth">
+    <div className="flex-1 overflow-y-auto p-4 md:p-12 pb-40 md:pb-56 space-y-8 scroll-smooth scrollbar-hide">
       {messages.map((m, idx) => (
-        <div key={idx} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
+        <div key={idx} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'} animate-in fade-in slide-in-from-bottom-4 duration-700`}>
           {m.role === 'assistant' && (
-            <span className="text-[9px] font-black uppercase tracking-widest text-[#6B7280] ml-2 md:ml-4 mb-2">OnchainCity AI</span>
+            <div className="flex items-center gap-2 ml-2 mb-2">
+              <div className="w-5 h-5 rounded-full bg-[#0A1628] flex items-center justify-center text-[10px] text-white font-black">O</div>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#0A1628]/50">OnchainCity AI</span>
+            </div>
           )}
-          <div className={`max-w-[88%] md:max-w-[75%] p-4 md:p-5 rounded-2xl md:rounded-3xl text-sm md:text-[15px] font-medium leading-relaxed shadow-sm ${
+          <div className={`max-w-[90%] md:max-w-[80%] p-5 md:p-7 rounded-[2rem] md:rounded-[2.5rem] text-[15px] md:text-base font-medium leading-[1.6] shadow-premium transition-all hover:shadow-2xl ${
             m.role === 'user' 
-              ? 'bg-[#4F6EF7] text-white rounded-br-none' 
-              : 'bg-[#F1F3FF] text-[#1A1A2E] rounded-bl-none border border-indigo-50/50'
+              ? 'bg-gradient-to-br from-[#0A1628] to-[#1A1A2E] text-white rounded-tr-none' 
+              : 'glass text-[#1A1A2E] rounded-tl-none'
           }`}>
-            <div className="space-y-2 md:space-y-3">
+            <div className="space-y-4">
               {m.content.split('\n').filter(l => l.trim()).map((line, i) => {
                 const isBullet = line.trim().startsWith('•') || line.trim().startsWith('-') || line.trim().startsWith('*');
                 const cleanLine = isBullet ? line.trim().replace(/^[•\-\*]\s*/, '') : line;
@@ -19,14 +29,14 @@ const MessageList = ({ messages, isStreaming, activeToolCall, handleSend, messag
                 const parts = cleanLine.split(/(\*\*.*?\*\*)/g);
                 const formattedLine = parts.map((part, j) => {
                   if (part.startsWith('**') && part.endsWith('**')) {
-                    return <strong key={j} className="font-black text-[#0A1628]">{part.slice(2, -2)}</strong>;
+                    return <strong key={j} className="font-black text-[#0A1628] bg-[#4F6EF7]/5 px-1.5 py-0.5 rounded-md">{part.slice(2, -2)}</strong>;
                   }
                   return part;
                 });
 
                 return (
-                  <div key={i} className={`flex items-start gap-2 ${isBullet ? 'pl-2' : ''}`}>
-                    {isBullet && <span className="text-[#4F6EF7] mt-1.5 flex-shrink-0">•</span>}
+                  <div key={i} className={`flex items-start gap-4 ${isBullet ? 'pl-4' : ''}`}>
+                    {isBullet && <div className="w-1.5 h-1.5 rounded-full bg-[#4F6EF7] mt-[10px] flex-shrink-0"></div>}
                     <p className="flex-1 m-0">{formattedLine}</p>
                   </div>
                 );
@@ -34,9 +44,9 @@ const MessageList = ({ messages, isStreaming, activeToolCall, handleSend, messag
             </div>
             
             {m.visas && m.visas.length > 0 && (
-              <div className="flex overflow-x-auto gap-4 mt-6 pb-2 -mx-2 scrollbar-hide snap-x">
+              <div className="flex overflow-x-auto gap-6 mt-8 pb-4 -mx-4 scrollbar-hide snap-x">
                 {m.visas.map((v, i) => (
-                  <div key={i} className="snap-center">
+                  <div key={i} className="snap-center transform hover:scale-[1.02] transition-transform duration-500">
                     <VisaCard visa={v} onAction={handleSend} />
                   </div>
                 ))}
@@ -48,6 +58,29 @@ const MessageList = ({ messages, isStreaming, activeToolCall, handleSend, messag
                 {m.applications.map((app, i) => (
                   <ApplicationCard key={i} application={app} onAction={handleSend} />
                 ))}
+              </div>
+            )}
+
+            {m.formFields && !dismissedForms.has(m.id) && (
+              <div className="mt-4">
+                <StructuredInputForm
+                  fields={m.formFields}
+                  isSubmitted={submittedForms.has(m.id)}
+                  onSubmit={(data) => {
+                    if (m.id === lastFormMsgId && !submittedForms.has(m.id)) {
+                      const formattedMsg = Object.entries(data)
+                        .map(([label, value]) => `${label}: ${value}`)
+                        .join(', ');
+                      
+                      handleSend(formattedMsg, true);
+                      
+                      const newSet = new Set(submittedForms);
+                      newSet.add(m.id);
+                      setSubmittedForms(newSet);
+                    }
+                  }}
+                  disabled={m.id !== lastFormMsgId}
+                />
               </div>
             )}
           </div>

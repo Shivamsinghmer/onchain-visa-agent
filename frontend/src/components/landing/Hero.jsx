@@ -26,7 +26,7 @@ const Hero = () => {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center mb-12 md:mb-16">
-          <button 
+          <button
             onClick={() => navigate('/chat')}
             className="pulse-btn w-full sm:w-auto px-8 md:px-10 py-4 md:py-5 rounded-full bg-[#0A1628] text-white text-base md:text-lg font-bold shadow-2xl shadow-[#0A1628]/40 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 active:scale-95 min-h-[56px]"
           >
@@ -35,19 +35,19 @@ const Hero = () => {
         </div>
 
         <div className="flex flex-col items-center gap-6">
-           <p className="text-[11px] md:text-sm font-bold text-[#6B7280] flex flex-wrap justify-center items-center gap-2 md:gap-4">
-             <span>200,000+ visas processed</span>
-             <span className="hidden sm:block w-1.5 h-1.5 rounded-full bg-gray-300" />
-             <span>Money-back guarantee</span>
-           </p>
-           
-           <div className="flex flex-wrap justify-center gap-2 md:gap-3">
-             {['SSL', 'Mastercard', 'Stripe', 'Visa'].map((badge) => (
-               <span key={badge} className="px-3 md:px-4 py-1.5 rounded-full bg-white border border-gray-100 text-[9px] md:text-[10px] font-black uppercase tracking-widest text-gray-400 shadow-sm">
-                 {badge}
-               </span>
-             ))}
-           </div>
+          <p className="text-[11px] md:text-sm font-bold text-[#6B7280] flex flex-wrap justify-center items-center gap-2 md:gap-4">
+            <span>200,000+ visas processed</span>
+            <span className="hidden sm:block w-1.5 h-1.5 rounded-full bg-gray-300" />
+            <span>Money-back guarantee</span>
+          </p>
+
+          <div className="flex flex-wrap justify-center gap-2 md:gap-3">
+            {['SSL', 'Mastercard', 'Stripe', 'Visa'].map((badge) => (
+              <span key={badge} className="px-3 md:px-4 py-1.5 rounded-full bg-white border border-gray-100 text-[9px] md:text-[10px] font-black uppercase tracking-widest text-gray-400 shadow-sm">
+                {badge}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
 
