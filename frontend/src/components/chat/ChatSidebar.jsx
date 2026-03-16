@@ -1,11 +1,18 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
-const ChatSidebar = ({ messages, sidebarOpen, clearChat, applications, userEmail }) => {
+const ChatSidebar = ({ messages, sidebarOpen, clearChat, applications, userEmail, setSidebarOpen }) => {
   const navigate = useNavigate();
 
   return (
-    <aside className={`${sidebarOpen ? 'w-64' : 'w-0'} bg-[#F1F3FF] border-r border-gray-200 transition-all duration-300 flex flex-col relative overflow-hidden`}>
+    <aside className="h-full w-64 bg-[#F1F3FF] border-r border-gray-200 flex flex-col relative overflow-hidden">
+      {/* Mobile Close Button */}
+      <button 
+        onClick={() => setSidebarOpen?.(false)}
+        className="absolute top-4 right-4 lg:hidden p-2 text-[#6B7280] hover:text-[#0A1628] transition-all z-50 min-w-[44px] min-h-[44px] flex items-center justify-center bg-white/50 backdrop-blur-sm rounded-lg"
+      >
+        <span className="text-xl">✕</span>
+      </button>
+
       <div className="p-6">
         <button 
           onClick={() => navigate('/')}
@@ -17,7 +24,7 @@ const ChatSidebar = ({ messages, sidebarOpen, clearChat, applications, userEmail
 
         <button 
           onClick={clearChat}
-          className="w-full py-3 px-4 rounded-xl bg-[#0A1628] text-white text-sm font-bold shadow-lg shadow-[#0A1628]/20 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all"
+          className="w-full h-12 px-4 rounded-xl bg-[#0A1628] text-white text-sm font-bold shadow-lg shadow-[#0A1628]/20 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all"
         >
           <span className="text-lg">+</span> New Chat
         </button>
@@ -59,9 +66,9 @@ const ChatSidebar = ({ messages, sidebarOpen, clearChat, applications, userEmail
         )}
       </div>
 
-      <div className="p-4 border-t border-gray-200 mt-auto">
+      <div className="p-4 border-t border-gray-200 mt-auto bg-[#F1F3FF]">
         <div className="flex items-center gap-3 p-2">
-          <div className={`w-10 h-10 rounded-full ${userEmail ? 'bg-[#10B981]' : 'bg-[#4F6EF7]'} flex items-center justify-center text-white font-bold shadow-md transition-colors`}>
+          <div className={`w-10 h-10 shrink-0 rounded-full ${userEmail ? 'bg-[#10B981]' : 'bg-[#4F6EF7]'} flex items-center justify-center text-white font-bold shadow-md transition-colors`}>
             {userEmail ? userEmail[0].toUpperCase() : 'G'}
           </div>
           <div className="flex-1 overflow-hidden">

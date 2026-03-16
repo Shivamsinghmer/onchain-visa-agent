@@ -9,17 +9,17 @@ const suggestions = [
 
 const SuggestionGrid = ({ handleSend }) => {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center text-center max-w-2xl mx-auto py-10 px-6 overflow-y-auto">
-      <span className="text-7xl mb-6">✈️</span>
-      <h2 className="text-3xl font-serif font-black text-[#0A1628] mb-4 tracking-tight">Your OnchainCity Visa Advisor</h2>
-      <p className="text-[#6B7280] font-medium mb-10 leading-relaxed">I'll help you search visas, navigate documents, and track your global applications in real-time.</p>
+    <div className="min-h-full flex flex-col items-center justify-center text-center max-w-2xl mx-auto py-8 md:py-12 px-6 overflow-y-auto">
+      <span className="text-5xl md:text-7xl mb-4 md:mb-6 animate-bounce">✈️</span>
+      <h2 className="text-2xl md:text-3xl font-serif font-black text-[#0A1628] mb-3 md:mb-4 tracking-tight leading-tight">Your OnchainCity Visa Advisor</h2>
+      <p className="text-sm md:text-base text-[#6B7280] font-medium mb-8 md:mb-10 leading-relaxed max-w-md">I'll help you search visas, navigate documents, and track your global applications in real-time.</p>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 w-full">
         {suggestions.map((s, i) => (
           <button 
             key={i} 
             onClick={() => handleSend(s.val)}
-            className="p-5 text-left border border-gray-100 rounded-2xl transition-all hover:bg-[#4F6EF7]/5 hover:border-[#4F6EF7]/20 group shadow-sm"
+            className="p-4 md:p-5 text-left border border-gray-100 rounded-2xl transition-all hover:bg-[#4F6EF7]/5 hover:border-[#4F6EF7]/20 group shadow-sm min-h-[48px]"
           >
             <span className="text-sm font-bold text-[#0A1628] block group-hover:text-[#4F6EF7] transition-colors">{s.label}</span>
             <span className="text-[10px] text-[#6B7280] font-medium">Click to ask assistant</span>

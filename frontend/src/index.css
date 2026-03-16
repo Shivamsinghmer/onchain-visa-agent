@@ -15,8 +15,10 @@
 }
 
 @layer base {
-  body {
-    @apply bg-[#F8F9FF] text-[#1A1A2E] font-sans;
+  html, body {
+    @apply bg-[#F8F9FF] text-[#1A1A2E] font-sans overflow-x-hidden;
+    width: 100%;
+    position: relative;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-serif;
@@ -24,6 +26,13 @@
 }
 
 @layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
   .font-serif {
     font-family: 'Playfair Display', serif;
   }

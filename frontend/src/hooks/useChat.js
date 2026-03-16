@@ -112,32 +112,33 @@ export function useChat() {
                   if (parsedResult) {
                     // Update global state based on tool name
                     if (event.name === 'search_visas' || event.name === 'get_featured_visas') {
-                      const visaList = parsedResult.visas || (Array.isArray(parsedResult) ? parsedResult : []);
+                      const visaList = parsedResult.data || parsedResult.visas || (Array.isArray(parsedResult) ? parsedResult : []);
                       setVisas(visaList);
-                      // Also attach to message for local component needs
                       setMessages(prev => prev.map(m => m.id === assistantMsgId ? { ...m, visas: visaList } : m));
                     }
 
                     if (event.name === 'get_visa_details') {
-                      setVisas([parsedResult]);
-                      setMessages(prev => prev.map(m => m.id === assistantMsgId ? { ...m, visas: [parsedResult] } : m));
+                      const visaData = parsedResult.data || parsedResult;
+                      setVisas([visaData]);
+                      setMessages(prev => prev.map(m => m.id === assistantMsgId ? { ...m, visas: [visaData] } : m));
                     }
 
                     if (event.name === 'list_applications') {
-                      const apps = parsedResult.applications || (Array.isArray(parsedResult) ? parsedResult : []);
+                      const apps = parsedResult.data || parsedResult.applications || (Array.isArray(parsedResult) ? parsedResult : []);
                       setApplications(apps);
                       setMessages(prev => prev.map(m => m.id === assistantMsgId ? { ...m, applications: apps } : m));
                     }
 
                     if (event.name === 'submit_application') {
-                      if (parsedResult.applicationId) {
+                      const appData = parsedResult.data || parsedResult;
+                      if (appData.applicationId || appData.id) {
                         const newApp = {
-                          id: parsedResult.applicationId,
-                          applicationId: parsedResult.applicationId,
-                          visaId: parsedResult.visaId,
-                          visaName: parsedResult.visaName || `Visa #${parsedResult.visaId}`,
-                          status: parsedResult.status || 'pending',
-                          submittedAt: parsedResult.submittedAt || new Date().toISOString()
+                          id: appData.applicationId || appData.id,
+                          applicationId: appData.applicationId || appData.id,
+                          visaId: appData.visaId || appData.visa_id,
+                          visaName: appData.visaName || appData.visa_type || `Visa #${appData.visaId || appData.visa_id}`,
+                          status: appData.status || 'pending',
+                          submittedAt: appData.submittedAt || appData.created_at || new Date().toISOString()
                         };
                         setApplications(prev => [...prev, newApp]);
                         setMessages(prev => prev.map(m => m.id === assistantMsgId ? { ...m, applications: [newApp] } : m));

@@ -1,41 +1,53 @@
 import fetch from "node-fetch";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from 'url';
+import dotenv from "dotenv";
+dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const TOKEN_FILE = path.join(__dirname, '..', '..', '.mcp_token.json');
-
-export const API_KEY = process.env.ONCHAIN_API_KEY || "oc_test_OCb_dtxmUEGfgQ__0vqp2HKVMMKIrwGF";
+export const API_KEY = process.env.ONCHAIN_API_KEY || "";
 export const API_URL = process.env.ONCHAIN_API_URL || "https://staging.onchain.city";
 
-function loadToken(): string | null {
-  try {
-    if (fs.existsSync(TOKEN_FILE)) {
-      const data = fs.readFileSync(TOKEN_FILE, 'utf8');
-      const json = JSON.parse(data);
-      return json.token || null;
-    }
-  } catch (err) {
-    console.error("[MCP] Failed to load token from file:", err);
-  }
-  return null;
+if (!API_KEY) {
+  console.error("[MCP] Warning: ONCHAIN_API_KEY is not set.");
 }
 
-export let jwtToken: string | null = process.env.ONCHAIN_USER_TOKEN || loadToken();
+// ── JWT state ─────────────────────────────────────────────────────────────────
+let jwtToken: string | null = process.env.ONCHAIN_USER_TOKEN || null;
 
-export function setJwtToken(token: string | null) {
+export function setJwtToken(token: string) {
   jwtToken = token;
-  try {
-    fs.writeFileSync(TOKEN_FILE, JSON.stringify({ token, updatedAt: new Date().toISOString() }));
-  } catch (err) {
-    console.error("[MCP] Failed to save token to file:", err);
-  }
+  console.error(`[MCP] JWT set: ${token.substring(0, 20)}...`);
 }
 
-export async function apiRequest(endpoint: string, method: string = "GET", body?: any) {
-  const fullUrl = `${API_URL}/api/partner${endpoint}`;
+export function getJwtToken(): string | null {
+  return jwtToken;
+}
+
+export function clearJwtToken() {
+  jwtToken = null;
+  console.error("[MCP] JWT cleared.");
+}
+
+/**
+ * Returns true when the current JWT is a staging fallback token.
+ * Fallback JWTs are rejected by the real API — use mock data instead.
+ */
+export function isFallbackJwt(): boolean {
+  return !!jwtToken && (
+    jwtToken.startsWith("staging_fallback_jwt_") ||
+    jwtToken === "mock_jwt_token_for_staging_fallback"
+  );
+}
+
+// ── Core request helper ───────────────────────────────────────────────────────
+/**
+ * All endpoints MUST use /api/partner/ prefix.
+ * Pass endpoint without the base, e.g. "/api/partner/visas/search"
+ */
+export async function apiRequest(
+  endpoint: string,
+  method: string = "GET",
+  body?: any
+) {
+  const fullUrl = `${API_URL}${endpoint}`;
 
   const headers: any = {
     "Content-Type": "application/json",
@@ -46,7 +58,7 @@ export async function apiRequest(endpoint: string, method: string = "GET", body?
     headers["Authorization"] = `Bearer ${jwtToken}`;
   }
 
-  console.error(`[MCP] Requesting: ${method} ${fullUrl}`);
+  console.error(`[MCP] ${method} ${fullUrl} | JWT: ${jwtToken ? "present" : "none"}`);
 
   const response = await fetch(fullUrl, {
     method,
@@ -54,23 +66,33 @@ export async function apiRequest(endpoint: string, method: string = "GET", body?
     body: body ? JSON.stringify(body) : undefined,
   });
 
-  console.error(`[MCP] Response Status: ${response.status}`);
+  console.error(`[MCP] Status: ${response.status}`);
 
-  if (response.status === 401) {
-    console.error(`[MCP] 401 Unauthorized received. Clearing token.`);
-    setJwtToken(null);
-  }
-
-  const contentType = response.headers.get("content-type");
-  if (!contentType || !contentType.includes("application/json")) {
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.includes("application/json")) {
     const text = await response.text();
-    console.error(`[MCP] Non-JSON response from ${fullUrl}: ${text.substring(0, 200)}...`);
-    throw new Error(`API at ${fullUrl} returned non-JSON response (${response.status})`);
+    throw new Error(
+      `Non-JSON response (${response.status}): ${text.substring(0, 200)}`
+    );
   }
 
   const data = await response.json() as any;
   if (!response.ok) {
-    throw new Error(`API at ${fullUrl} Error (${response.status}): ${data.message || data.error || 'Unknown error'}`);
+    throw new Error(
+      `API Error (${response.status}): ${data.message || data.error || JSON.stringify(data)}`
+    );
   }
   return data;
+}
+
+// ── Response helpers ──────────────────────────────────────────────────────────
+export function ok(data: any) {
+  return { content: [{ type: "text", text: JSON.stringify(data) }] };
+}
+
+export function err(message: string) {
+  return {
+    content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+    isError: true
+  };
 }

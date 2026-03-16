@@ -5,100 +5,132 @@ import { SYSTEM_PROMPT } from './prompts.js';
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+const isValidEmail = (str) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str);
+
 export async function* runAgentStream(userMessage, sessionId) {
   try {
-    console.log(`[Agent] runAgentStream called with message: "${userMessage}", session: ${sessionId}`);
-    
-    // 1. Append user message to session history
+    console.log(`[Agent] runAgentStream called. Session: ${sessionId}, Message: "${userMessage}"`);
+
+    // 1. Append user message to history
     appendMessage(sessionId, { role: 'user', content: userMessage });
-    
-    // 2. Fetch tools from MCP
-    console.log(`[Agent] Fetching MCP tools...`);
-    let tools;
+
+    // 2. Fetch MCP tools
+    let tools = [];
     try {
       tools = await getMcpToolsForGroq();
       console.log(`[Agent] Got ${tools.length} tools from MCP`);
     } catch (err) {
       console.error(`[Agent] Failed to get MCP tools:`, err);
-      tools = [];
     }
 
     let isLooping = true;
     let loopCount = 0;
     const MAX_LOOPS = 10;
-    
+
     while (isLooping && loopCount < MAX_LOOPS) {
       loopCount++;
-      console.log(`[Agent] Loop iteration #${loopCount}`);
-      
+      console.log(`[Agent] Loop #${loopCount}`);
+
       const history = getHistory(sessionId);
       const email = getEmail(sessionId);
       const pendingEmail = getState(sessionId, 'pendingEmail');
       const isFallback = getState(sessionId, 'isFallback');
-      
-      console.log(`[Agent] Session: ${sessionId}, Email: ${email}, Pending: ${pendingEmail}`);
 
+      console.log(`[Agent] State — Email: ${email}, PendingEmail: ${pendingEmail}, Fallback: ${isFallback}`);
+
+      // ── Build context injection ──────────────────────────────────────────
       let contextMessage = '';
+
       if (email) {
-        contextMessage = `Current User: **${email}** (Authenticated). You already have the user's email verified.`;
+        contextMessage = `SESSION STATUS: Authenticated.
+User email: **${email}**
+The user is fully verified. Proceed with their request directly.
+Do NOT ask for email or OTP again.`;
+
       } else if (pendingEmail) {
-        contextMessage = `AUTHENTICATION STATUS: Email provided is **${pendingEmail}**. CODE SENT.
-CRITICAL: The user's next message contains the 6-digit OTP code for **${pendingEmail}**.
-1. Call verify_otp(email: "${pendingEmail}", code: "USER_DIGITS") immediately.
-2. DO NOT validate the 6-digit number as an email address.
-3. DO NOT ask for the email again. The email is **${pendingEmail}**.`;
+        // CRITICAL: user message is already in history — reference it correctly
+        contextMessage = `AUTHENTICATION IN PROGRESS.
+Pending email: **${pendingEmail}** — OTP has been sent.
+
+The user's most recent message in the conversation history is their OTP code.
+INSTRUCTION: Call verify_otp immediately with:
+  email: "${pendingEmail}"
+  code: [the 6-digit number from the user's last message]
+
+RULES:
+- DO NOT treat the 6-digit number as an email address.
+- DO NOT ask any questions.
+- DO NOT ask for the email again.
+- Just call verify_otp right now.`;
+
       } else {
-        contextMessage = `User is not yet authenticated. You MUST ask for their email address first. When they provide it, call send_otp(email).`;
+        contextMessage = `AUTHENTICATION STATUS: Not authenticated.
+The user has not provided their email yet.
+INSTRUCTION: Ask for their email address.
+When they provide a valid email (contains @ and a domain), call send_otp(email).
+
+IMPORTANT: If the user's message does NOT look like an email address
+(e.g. it's a question, greeting, or request like "search visas to Dubai"):
+Do NOT say "That doesn't look like a valid email."
+Instead say: "To get started, please enter your email address. 
+Once verified, I can help you with [what they asked]."`;
       }
 
       if (isFallback) {
-        contextMessage += ` [SYSTEM NOTE: Fallback Mode is active. The user verified using a local mock code because the staging server was unreachable. Real API calls requiring authentication may still fail with 401/Unauthorized. If this happens, do NOT ask the user to verify their email again; instead, explain that the staging server is currently limited or unreachable.]`;
+        contextMessage += `\n\n[SYSTEM NOTE: Fallback Mode active. User verified via local mock OTP. 
+Real API calls may return 401. Do NOT ask user to re-verify. 
+Explain that staging server has limited functionality if protected calls fail.]`;
       }
 
       const contextPrompt = { role: 'system', content: contextMessage };
       const messages = [SYSTEM_PROMPT, contextPrompt, ...history];
 
-      // 3. Call Groq
-      console.log(`[Agent] Calling Groq with ${messages.length} messages and model llama-3.3-70b-versatile`);
+      console.log(`[Agent] Calling Groq with ${messages.length} messages...`);
 
+      // ── Call Groq ────────────────────────────────────────────────────────
       let stream;
       try {
         stream = await groq.chat.completions.create({
-          model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+          model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
           messages,
           tools: tools.length > 0 ? tools : undefined,
           tool_choice: tools.length > 0 ? 'auto' : undefined,
-          stream: true
+          stream: true,
+          temperature: 0.2, // lower = less hallucination
+          max_tokens: 1024
         });
-        console.log(`[Agent] Groq stream created successfully`);
       } catch (err) {
         console.error('[Agent] Groq.create failed:', err);
         yield { type: 'error', message: `AI service error: ${err.message}` };
         return;
       }
 
-      let currentIterationText = '';
+      // ── Stream tokens ────────────────────────────────────────────────────
+      let bufferedText = '';          // buffer text — only send after we know no tool calls
       const toolCallsMap = new Map();
       let finishReason = null;
 
-      // 4. Stream tokens
       try {
         for await (const chunk of stream) {
           const choice = chunk.choices[0];
           const delta = choice?.delta || {};
 
+          // Buffer text — don't yield yet (tool calls may follow)
           if (delta.content) {
-            currentIterationText += delta.content;
-            yield { type: 'text', content: delta.content };
+            bufferedText += delta.content;
           }
 
+          // Accumulate tool calls
           if (delta.tool_calls) {
             for (const tc of delta.tool_calls) {
               if (!toolCallsMap.has(tc.index)) {
                 toolCallsMap.set(tc.index, {
-                  id: tc.id || '',
+                  id: tc.id || `tool_${tc.index}`,
                   type: 'function',
-                  function: { name: tc.function?.name || '', arguments: tc.function?.arguments || '' }
+                  function: {
+                    name: tc.function?.name || '',
+                    arguments: tc.function?.arguments || ''
+                  }
                 });
               } else {
                 const existing = toolCallsMap.get(tc.index);
@@ -114,39 +146,36 @@ CRITICAL: The user's next message contains the 6-digit OTP code for **${pendingE
           }
         }
       } catch (streamErr) {
-        console.error('[Agent] Error reading Groq stream:', streamErr);
+        console.error('[Agent] Stream read error:', streamErr);
         yield { type: 'error', message: `Stream error: ${streamErr.message}` };
         return;
       }
 
       const finalToolCalls = Array.from(toolCallsMap.values());
-      console.log(`[Agent] Groq finished. Text length: ${currentIterationText.length}, Tool calls: ${finalToolCalls.length}, Finish reason: ${finishReason}`);
-      
-      // Append assistant message to history
-      if (finalToolCalls.length > 0) {
-        appendMessage(sessionId, { 
-          role: 'assistant', 
-          content: currentIterationText || "", 
-          tool_calls: finalToolCalls 
-        });
-      } else if (currentIterationText) {
-        appendMessage(sessionId, { role: 'assistant', content: currentIterationText });
-      }
+      console.log(`[Agent] Finished. Text: ${bufferedText.length} chars, Tools: ${finalToolCalls.length}, Reason: ${finishReason}`);
 
+      // ── Handle tool calls ────────────────────────────────────────────────
       if (finalToolCalls.length > 0) {
-        // Execute tools
+        // Append assistant message with tool calls (bufferedText may be empty or a preamble)
+        appendMessage(sessionId, {
+          role: 'assistant',
+          content: bufferedText || '',
+          tool_calls: finalToolCalls
+        });
+
+        // Execute each tool
         for (const tc of finalToolCalls) {
           const name = tc.function.name;
           let args = {};
           try {
             args = tc.function.arguments ? JSON.parse(tc.function.arguments) : {};
           } catch (e) {
-            console.error("[Agent] Failed to parse tool arguments:", e);
+            console.error(`[Agent] Failed to parse args for ${name}:`, e);
           }
 
-          console.log(`[Agent] Calling tool: ${name}`);
+          console.log(`[Agent] Calling tool: ${name} with args:`, JSON.stringify(args));
           yield { type: 'tool_call', name, input: args };
-          
+
           let result;
           try {
             result = await callMcpTool(name, args);
@@ -154,71 +183,92 @@ CRITICAL: The user's next message contains the 6-digit OTP code for **${pendingE
             console.error(`[Agent] Tool ${name} threw:`, toolErr);
             result = JSON.stringify({ error: toolErr.message });
           }
-          
+
+          console.log(`[Agent] Tool ${name} result:`, String(result).substring(0, 200));
           yield { type: 'tool_result', name, result };
 
-          // Handle 401/Unauthorized from any tool
           const resultStr = String(result).toLowerCase();
-          if (resultStr.includes('401') || resultStr.includes('unauthorized') || resultStr.includes('invalid token')) {
-            console.error(`[Agent] Tool ${name} returned 401/Unauthorized. Clearing session email.`);
+
+          // Handle 401 — session expired
+          if (resultStr.includes('"401"') || resultStr.includes('unauthorized') || resultStr.includes('invalid token')) {
+            console.warn(`[Agent] Tool ${name} returned 401. Clearing session.`);
             setEmail(sessionId, null);
+            setState(sessionId, 'pendingEmail', null);
           }
 
-          // Helper to validate email format before saving to state
-          const isValidEmail = (str) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str);
-
-          // If send_otp was successful, update the pending email
+          // Store pending email after send_otp
           if (name === 'send_otp' && args.email && isValidEmail(args.email)) {
             setState(sessionId, 'pendingEmail', args.email);
+            console.log(`[Agent] Stored pendingEmail: ${args.email}`);
           }
 
+          // Handle verify_otp result
           if (name === 'verify_otp') {
+            let parsed = null;
             try {
-              const data = typeof result === 'string' ? JSON.parse(result) : result;
-              if (data.success || data.token) {
-                const verifiedEmail = (args.email && isValidEmail(args.email)) ? args.email : pendingEmail;
-                setEmail(sessionId, verifiedEmail);
-                setState(sessionId, 'pendingEmail', null);
-                if (String(result).includes('Fallback Mode')) {
-                  setState(sessionId, 'isFallback', true);
-                } else {
-                  setState(sessionId, 'isFallback', false);
-                }
-              }
+              parsed = typeof result === 'string' ? JSON.parse(result) : result;
             } catch (e) {
-              if (typeof result === 'string' && (result.includes('verified') || result.includes('Success'))) {
-                const verifiedEmail = (args.email && isValidEmail(args.email)) ? args.email : pendingEmail;
-                setEmail(sessionId, verifiedEmail);
-                setState(sessionId, 'pendingEmail', null);
-                if (result.includes('Fallback')) setState(sessionId, 'isFallback', true);
-              }
+              // non-JSON result — check string content
+            }
+
+            const isSuccess = parsed?.success || parsed?.token ||
+              (typeof result === 'string' && (
+                result.toLowerCase().includes('verified') ||
+                result.toLowerCase().includes('success')
+              ));
+
+            if (isSuccess) {
+              // Use email from args, fallback to pendingEmail in state
+              const verifiedEmail =
+                (args.email && isValidEmail(args.email)) ? args.email
+                : getState(sessionId, 'pendingEmail');
+
+              setEmail(sessionId, verifiedEmail);
+              setState(sessionId, 'pendingEmail', null);
+              setState(sessionId, 'isFallback',
+                typeof result === 'string' && result.includes('Fallback')
+              );
+              console.log(`[Agent] Verified. Email set to: ${verifiedEmail}`);
             }
           }
 
+          // Append tool result to history
           appendMessage(sessionId, {
             role: 'tool',
             tool_call_id: tc.id,
-            name: name,
+            name,
             content: String(result)
           });
         }
-        // Loop back to let the model generate the final response with tool results
+
+        // Loop continues — Groq will generate final response with tool results
+
       } else {
-        // Final response (no tools)
-        if (!currentIterationText) {
-          const fallbackValue = "How can I help you today?";
-          yield { type: 'text', content: fallbackValue };
-          appendMessage(sessionId, { role: 'assistant', content: fallbackValue });
+        // ── Final text response (no tool calls) ─────────────────────────
+        const finalText = bufferedText.trim();
+
+        if (finalText) {
+          // Yield the complete buffered text at once
+          yield { type: 'text', content: finalText };
+          appendMessage(sessionId, { role: 'assistant', content: finalText });
+        } else {
+          // Groq returned nothing — this should not happen but handle gracefully
+          console.warn('[Agent] Empty response from Groq. Sending safe fallback.');
+          const fallback = 'I\'m here to help. What would you like to do?';
+          yield { type: 'text', content: fallback };
+          appendMessage(sessionId, { role: 'assistant', content: fallback });
         }
+
         yield { type: 'done' };
         isLooping = false;
       }
     }
-    
+
     if (loopCount >= MAX_LOOPS) {
-      console.error(`[Agent] Hit max loop count (${MAX_LOOPS})`);
-      yield { type: 'error', message: 'Agent exceeded maximum iterations' };
+      console.error(`[Agent] Hit max loop count (${MAX_LOOPS}). Aborting.`);
+      yield { type: 'error', message: 'The agent took too many steps. Please try again.' };
     }
+
   } catch (outerErr) {
     console.error('[Agent] UNHANDLED ERROR in runAgentStream:', outerErr);
     yield { type: 'error', message: `Internal error: ${outerErr.message}` };
