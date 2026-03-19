@@ -93,9 +93,9 @@ Explain that staging server has limited functionality if protected calls fail.]`
 
       const contextPrompt = { role: 'system', content: contextMessage };
       const messages = [
-        SYSTEM_PROMPT, 
-        contextPrompt, 
-        ...history.slice(-25) 
+        SYSTEM_PROMPT,
+        contextPrompt,
+        ...history.slice(-20)
       ];
 
       console.log(`[Agent] Calling Groq with ${messages.length} messages...`);
@@ -233,7 +233,7 @@ Explain that staging server has limited functionality if protected calls fail.]`
               // Use email from args, fallback to pendingEmail in state
               const verifiedEmail =
                 (args.email && isValidEmail(args.email)) ? args.email
-                : getState(sessionId, 'pendingEmail');
+                  : getState(sessionId, 'pendingEmail');
 
               setEmail(sessionId, verifiedEmail);
               setState(sessionId, 'pendingEmail', null);

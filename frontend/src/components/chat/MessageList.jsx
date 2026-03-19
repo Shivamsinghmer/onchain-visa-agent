@@ -13,8 +13,8 @@ const MessageList = ({ messages, isStreaming, activeToolCall, handleSend, messag
         <div key={idx} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'} animate-in fade-in slide-in-from-bottom-4 duration-700`}>
           {m.role === 'assistant' && (
             <div className="flex items-center gap-2 ml-2 mb-2">
-              <div className="w-5 h-5 rounded-full bg-[#0A1628] flex items-center justify-center text-[10px] text-white font-black">O</div>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#0A1628]/50">OnchainCity AI</span>
+              <div className="w-5 h-5 rounded-full bg-[#0A1628] flex items-center justify-center text-[10px] text-white font-semibold">O</div>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#0A1628]/50">OnchainCity AI</span>
             </div>
           )}
           <div className={`max-w-[90%] md:max-w-[80%] p-5 md:p-7 rounded-[2rem] md:rounded-[2.5rem] text-[15px] md:text-base font-medium leading-[1.6] shadow-premium transition-all hover:shadow-2xl ${
@@ -30,7 +30,7 @@ const MessageList = ({ messages, isStreaming, activeToolCall, handleSend, messag
                 const parts = cleanLine.split(/(\*\*.*?\*\*)/g);
                 const formattedLine = parts.map((part, j) => {
                   if (part.startsWith('**') && part.endsWith('**')) {
-                    return <strong key={j} className="font-black text-[#0A1628] bg-[#4F6EF7]/5 px-1.5 py-0.5 rounded-md">{part.slice(2, -2)}</strong>;
+                    return <strong key={j} className="font-semibold text-[#0A1628] bg-[#4F6EF7]/5 px-1.5 py-0.5 rounded-md">{part.slice(2, -2)}</strong>;
                   }
                   return part;
                 });
@@ -100,7 +100,7 @@ const MessageList = ({ messages, isStreaming, activeToolCall, handleSend, messag
       
       {isStreaming && (
         <div className="flex flex-col items-start animate-fade-in">
-           <span className="text-[9px] font-black uppercase tracking-widest text-[#6B7280] ml-2 md:ml-4 mb-2">Advisor Thinking</span>
+           <span className="text-[9px] font-semibold uppercase tracking-widest text-[#6B7280] ml-2 md:ml-4 mb-2">Advisor Thinking</span>
            <div className="bg-[#F1F3FF] p-4 md:p-5 rounded-2xl md:rounded-3xl rounded-bl-none inline-flex gap-1.5 shadow-sm">
               <div className="w-1.5 h-1.5 bg-[#4F6EF7]/40 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
               <div className="w-1.5 h-1.5 bg-[#4F6EF7]/40 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
@@ -110,7 +110,7 @@ const MessageList = ({ messages, isStreaming, activeToolCall, handleSend, messag
       )}
       
       {activeToolCall && (
-        <div className="flex items-center gap-2 ml-4 text-[9px] md:text-[10px] font-black uppercase tracking-widest text-[#4F6EF7] animate-pulse">
+        <div className="flex items-center gap-2 ml-4 text-[9px] md:text-[10px] font-semibold uppercase tracking-widest text-[#4F6EF7] animate-pulse">
           <span>⚙️ Calling {activeToolCall.name}...</span>
         </div>
       )}

@@ -17,8 +17,8 @@ const Hero = () => {
           <span className="text-[10px] md:text-xs font-bold uppercase tracking-wider text-[#6B7280]">Trusted by 50,000+ Travelers Worldwide</span>
         </div>
 
-        <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif font-black text-[#0A1628] leading-[1.1] mb-6 tracking-tight">
-          Visas & eSIM Data<br className="hidden sm:block" />
+        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl leading-tight font-serif font-semibold text-[#0A1628] leading-[1.1] mb-6 tracking-tight">
+          Visas & eSIM Data<br className="" />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0A1628] via-[#4F6EF7] to-[#818CF8]">All in One Place</span>
         </h1>
 
@@ -29,13 +29,13 @@ const Hero = () => {
         <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center mb-12 md:mb-16">
           <button
             onClick={() => navigate('/chat')}
-            className="pulse-btn w-full sm:w-auto px-8 md:px-10 py-4 md:py-5 rounded-full bg-[#0A1628] text-white text-base md:text-lg font-bold shadow-2xl shadow-[#0A1628]/40 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 active:scale-95 min-h-[56px]"
+            className="pulse-btn w-full sm:w-auto px-6 md:px-8 py-3.5 md:py-4 rounded-full bg-[#0A1628] text-white text-base md:text-lg font-bold shadow-2xl shadow-[#0A1628]/40 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 active:scale-95 min-h-[56px]"
           >
             Apply for Visa <span className="text-xl md:text-2xl leading-none">→</span>
           </button>
           <button
             onClick={() => navigate('/chat')}
-            className="w-full sm:w-auto px-8 md:px-10 py-4 md:py-5 rounded-full bg-white text-[#0A1628] text-base md:text-lg font-bold border-2 border-gray-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 hover:border-[#818CF8] hover:text-[#818CF8] active:scale-95 min-h-[56px] shadow-sm"
+            className="w-full sm:w-auto px-6 md:px-8 py-3.5 md:py-4 rounded-full bg-white text-[#0A1628] text-base md:text-lg font-bold border-2 border-gray-200 flex items-center justify-center gap-3 transition-all duration-300 hover:scale-105 hover:border-[#818CF8] hover:text-[#818CF8] active:scale-95 min-h-[56px] shadow-sm"
           >
             <span className="text-xl">📱</span> Get eSIM Plan
           </button>
@@ -52,7 +52,7 @@ const Hero = () => {
 
           <div className="flex flex-wrap justify-center gap-2 md:gap-3">
             {['SSL', 'Mastercard', 'Stripe', 'Visa', 'eSIM'].map((badge) => (
-              <span key={badge} className={`px-3 md:px-4 py-1.5 rounded-full border text-[9px] md:text-[10px] font-black uppercase tracking-widest shadow-sm ${
+              <span key={badge} className={`px-3 md:px-4 py-1.5 rounded-full border text-[9px] md:text-[10px] font-semibold uppercase tracking-widest shadow-sm ${
                 badge === 'eSIM' 
                   ? 'bg-[#0F172A] border-[#0F172A] text-white' 
                   : 'bg-white border-gray-100 text-gray-400'

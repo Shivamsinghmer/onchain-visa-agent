@@ -52,7 +52,7 @@ const FeaturesSection = () => {
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-gray-100 shadow-sm mb-6">
             <span className="text-[10px] md:text-xs font-bold uppercase tracking-wider text-[#6B7280]">Everything You Need to Travel</span>
           </div>
-          <h2 className="text-3xl md:text-5xl font-serif font-black text-[#0A1628] leading-tight mb-4 tracking-tight">
+          <h2 className="text-2xl sm:text-4xl md:text-5xl font-serif font-semibold text-[#0A1628] leading-tight mb-4 tracking-tight">
             Two Services,{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#4F6EF7] to-[#818CF8]">One Platform</span>
           </h2>
@@ -62,7 +62,7 @@ const FeaturesSection = () => {
         </div>
 
         {/* Feature Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
           {features.map((feature, i) => (
             <div
               key={i}
@@ -78,7 +78,7 @@ const FeaturesSection = () => {
                 </div>
 
                 {/* Title */}
-                <h3 className="text-lg md:text-xl font-serif font-black text-[#0A1628] mb-3 tracking-tight">
+                <h3 className="text-lg md:text-xl font-serif font-semibold text-[#0A1628] mb-3 tracking-tight">
                   {feature.title}
                 </h3>
 
@@ -100,7 +100,7 @@ const FeaturesSection = () => {
                 {/* CTA */}
                 <button
                   onClick={() => navigate('/chat')}
-                  className={`w-full py-3.5 rounded-xl text-xs font-black uppercase tracking-widest ${feature.accentBg} ${feature.accentText} border ${feature.accentBorder} hover:scale-[1.02] active:scale-[0.98] transition-all duration-200`}
+                  className={`w-full py-3.5 rounded-xl text-xs font-semibold uppercase tracking-widest ${feature.accentBg} ${feature.accentText} border ${feature.accentBorder} hover:scale-[1.02] active:scale-[0.98] transition-all duration-200`}
                 >
                   {feature.cta}
                 </button>

@@ -31,7 +31,7 @@ const ChatInput = ({ inputText, setInputText, handleSend, isStreaming }) => {
             </button>
           </div>
         </div>
-        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#6B7280]/40 text-center mt-4">Powered by OnchainCity Intelligence</p>
+        <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#6B7280]/40 text-center mt-4">Powered by OnchainCity Intelligence</p>
        </div>
     </div>
   );

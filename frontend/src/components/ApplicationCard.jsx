@@ -22,12 +22,12 @@ export function ApplicationCard({ application, onAction }) {
         <p className="font-sans font-bold text-[#0A1628] mt-1 truncate">{visaName}</p>
       </div>
       <div className="flex items-center justify-between w-full sm:w-auto gap-4">
-        <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-full ${getStatusColor(application.status)}`}>
+        <span className={`px-3 py-1 text-[10px] font-semibold uppercase tracking-wider rounded-full ${getStatusColor(application.status)}`}>
           {typeof application.status === 'string' ? application.status : 'Processing'}
         </span>
         <button 
           onClick={() => onAction(`Check status for application ${application.id || application.applicationId}`)}
-          className="h-10 px-6 bg-[#F8F9FF] text-[#4F6EF7] text-[11px] font-black uppercase tracking-widest rounded-xl border border-indigo-50 hover:bg-indigo-50 transition-all flex items-center justify-center whitespace-nowrap"
+          className="h-10 px-6 bg-[#F8F9FF] text-[#4F6EF7] text-[11px] font-semibold uppercase tracking-widest rounded-xl border border-indigo-50 hover:bg-indigo-50 transition-all flex items-center justify-center whitespace-nowrap"
         >
           Details
         </button>

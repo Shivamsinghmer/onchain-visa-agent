@@ -15,15 +15,15 @@ const RightPanel = ({ rightPanelOpen, activeApplications, activeVisas, esimPurch
           <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-[#F1F3FF] flex items-center justify-center text-3xl md:text-4xl mb-4 border border-indigo-50 shadow-inner">
             🌍
           </div>
-          <h3 className="text-base md:text-lg font-serif font-black text-[#0A1628]">Global Travel Hub</h3>
+          <h3 className="text-base md:text-lg font-serif font-semibold text-[#0A1628]">Global Travel Hub</h3>
           <p className="text-[10px] md:text-[11px] font-bold text-[#6B7280] uppercase tracking-[0.1em] mt-1">Real-time Visa Intelligence</p>
         </div>
 
         {/* TRACKER */}
         <div>
           <div className="flex justify-between items-center mb-6">
-            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#0A1628]">Active Applications</h4>
-            <span className="bg-indigo-50 text-[#4F6EF7] text-[10px] font-black px-2 py-0.5 rounded-full border border-indigo-100">
+            <h4 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#0A1628]">Active Applications</h4>
+            <span className="bg-indigo-50 text-[#4F6EF7] text-[10px] font-semibold px-2 py-0.5 rounded-full border border-indigo-100">
               {activeApplications.length}
             </span>
           </div>
@@ -32,8 +32,8 @@ const RightPanel = ({ rightPanelOpen, activeApplications, activeVisas, esimPurch
               {activeApplications.map((app, i) => (
                 <div key={i} className="p-4 rounded-2xl bg-[#F8F9FF] border border-gray-100 shadow-sm transition-transform hover:scale-[1.02]">
                   <div className="flex justify-between items-start mb-1">
-                    <p className="text-xs font-black text-[#0A1628] truncate max-w-[120px]">{app.visaName}</p>
-                    <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${app.status === 'completed' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'
+                    <p className="text-xs font-semibold text-[#0A1628] truncate max-w-[120px]">{app.visaName}</p>
+                    <span className={`text-[8px] font-semibold uppercase tracking-widest px-2 py-1 rounded-full ${app.status === 'completed' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'
                       }`}>
                       {typeof app.status === 'string' ? app.status : 'Processing'}
                     </span>
@@ -54,11 +54,11 @@ const RightPanel = ({ rightPanelOpen, activeApplications, activeVisas, esimPurch
 
         {/* DOCUMENTS CHECKLIST */}
         <div>
-          <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#0A1628] mb-6">Requirements Checklist</h4>
+          <h4 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#0A1628] mb-6">Requirements Checklist</h4>
           <div className="p-6 rounded-3xl bg-[#0A1628]/5 border border-indigo-50/50 text-center flex flex-col items-center">
             {activeVisas.length > 0 ? (
               <div className="text-left w-full space-y-3">
-                <p className="text-[10px] font-black text-[#4F6EF7] mb-2 uppercase tracking-wide">
+                <p className="text-[10px] font-semibold text-[#4F6EF7] mb-2 uppercase tracking-wide">
                   DOCUMENTS NEEDED FOR {(activeVisas[0].country && typeof activeVisas[0].country === 'object' ? activeVisas[0].country.name : activeVisas[0].country) || activeVisas[0].destination || 'Selected Destination'}:
                 </p>
                 <div className="flex items-center gap-2 text-[10px] font-bold text-[#1A1A2E]">
@@ -83,8 +83,8 @@ const RightPanel = ({ rightPanelOpen, activeApplications, activeVisas, esimPurch
         {/* eSIM PURCHASES */}
         <div>
           <div className="flex justify-between items-center mb-6">
-            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#0A1628]">eSIM Plans</h4>
-            <span className="bg-indigo-50 text-[#818CF8] text-[10px] font-black px-2 py-0.5 rounded-full border border-indigo-100">
+            <h4 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#0A1628]">eSIM Plans</h4>
+            <span className="bg-indigo-50 text-[#818CF8] text-[10px] font-semibold px-2 py-0.5 rounded-full border border-indigo-100">
               {esimPurchases.length}
             </span>
           </div>
@@ -95,9 +95,9 @@ const RightPanel = ({ rightPanelOpen, activeApplications, activeVisas, esimPurch
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-2">
                       <span className="text-sm">📶</span>
-                      <p className="text-[10px] font-black text-white/80 uppercase tracking-wider">eSIM</p>
+                      <p className="text-[10px] font-semibold text-white/80 uppercase tracking-wider">eSIM</p>
                     </div>
-                    <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${
+                    <span className={`text-[8px] font-semibold uppercase tracking-widest px-2 py-1 rounded-full ${
                       purchase.status?.toLowerCase() === 'done' 
                         ? 'bg-emerald-500/20 text-emerald-400' 
                         : purchase.status?.toLowerCase() === 'failed'
@@ -134,7 +134,7 @@ const RightPanel = ({ rightPanelOpen, activeApplications, activeVisas, esimPurch
         {/* HELP CENTER LINKS */}
         <div className="space-y-2 pt-4">
           {['Visa Policy Guide', 'Secure Document Center'].map(link => (
-            <button key={link} className="w-full text-left px-5 py-3.5 rounded-2xl border border-gray-100 text-[9px] font-black uppercase tracking-[0.15em] text-[#6B7280] hover:bg-[#F8F9FF] hover:border-[#4F6EF7]/20 transition-all flex justify-between items-center group shadow-sm">
+            <button key={link} className="w-full text-left px-5 py-3.5 rounded-2xl border border-gray-100 text-[9px] font-semibold uppercase tracking-[0.15em] text-[#6B7280] hover:bg-[#F8F9FF] hover:border-[#4F6EF7]/20 transition-all flex justify-between items-center group shadow-sm">
               {link}
               <span className="text-gray-300 group-hover:text-[#4F6EF7] transition-colors leading-none mb-1">→</span>
             </button>

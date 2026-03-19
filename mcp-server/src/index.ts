@@ -197,7 +197,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         properties: {
           country: { type: "string", description: "Country name or city e.g. 'Dubai', 'Japan', 'UAE'" },
           regions: { type: "string", description: "Optional region e.g. 'Asia', 'Middle East and North Africa'" }
-        }
+        },
+        required: ["country"]
       }
     },
     {

@@ -16,7 +16,7 @@ const ChatSidebar = ({ messages, sidebarOpen, clearChat, applications, userEmail
       <div className="p-6">
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-[#0A1628] font-serif font-black text-xl mb-8 group"
+          className="flex items-center gap-2 text-[#0A1628] font-serif font-semibold text-xl mb-8 group"
         >
           <span className="text-sm group-hover:-translate-x-1 transition-transform">←</span>
           <span>OnchainCity</span>
@@ -32,7 +32,7 @@ const ChatSidebar = ({ messages, sidebarOpen, clearChat, applications, userEmail
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-8">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-[#6B7280] mb-4 px-2">Conversation History</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#6B7280] mb-4 px-2">Conversation History</p>
           <div className="space-y-1">
             {messages.length > 0 ? (
               <div className="flex items-center gap-3 p-3 rounded-xl bg-[#0A1628]/5 cursor-pointer group transition-colors">
@@ -50,14 +50,14 @@ const ChatSidebar = ({ messages, sidebarOpen, clearChat, applications, userEmail
 
         {applications && applications.length > 0 && (
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-[#6B7280] mb-4 px-2">Your Applications</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-[#6B7280] mb-4 px-2">Your Applications</p>
             <div className="space-y-2">
               {applications.map((app, idx) => (
                 <div key={idx} className="p-3 rounded-xl border border-[#0A1628]/10 bg-white shadow-sm hover:border-[#4F6EF7]/30 transition-all">
-                  <p className="text-[10px] font-black text-[#0A1628] truncate">{app.visaName}</p>
+                  <p className="text-[10px] font-semibold text-[#0A1628] truncate">{app.visaName}</p>
                   <div className="flex justify-between items-center mt-1">
                     <span className="text-[8px] font-bold text-[#6B7280]">{app.applicationId || app.id}</span>
-                    <span className="text-[8px] font-black uppercase text-[#4F6EF7] bg-[#4F6EF7]/5 px-1.5 py-0.5 rounded-full">{app.status}</span>
+                    <span className="text-[8px] font-semibold uppercase text-[#4F6EF7] bg-[#4F6EF7]/5 px-1.5 py-0.5 rounded-full">{app.status}</span>
                   </div>
                 </div>
               ))}
@@ -78,7 +78,7 @@ const ChatSidebar = ({ messages, sidebarOpen, clearChat, applications, userEmail
             </p>
           </div>
         </div>
-        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#6B7280] text-center mt-6">© 2025 OnchainCity</p>
+        <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#6B7280] text-center mt-6">© 2025 OnchainCity</p>
       </div>
     </aside>
   );

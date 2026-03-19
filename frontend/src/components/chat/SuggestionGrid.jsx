@@ -12,11 +12,11 @@ const suggestions = [
 const SuggestionGrid = ({ handleSend }) => {
   return (
     <div className="min-h-full flex flex-col items-center justify-center text-center max-w-2xl mx-auto py-8 md:py-12 px-6 overflow-y-auto">
-      <span className="text-5xl md:text-7xl mb-4 md:mb-6 ">✈️</span>
-      <h2 className="text-2xl md:text-3xl font-serif font-black text-[#0A1628] mb-3 md:mb-4 tracking-tight leading-tight">Your OnchainCity Visa Advisor</h2>
+      <span className="text-4xl sm:text-5xl md:text-6xl mb-4 md:mb-6 ">✈️</span>
+      <h2 className="text-xl sm:text-2xl md:text-3xl font-serif font-semibold text-[#0A1628] mb-3 md:mb-4 tracking-tight leading-tight">Your OnchainCity Visa Advisor</h2>
       <p className="text-sm md:text-base text-[#6B7280] font-medium mb-8 md:mb-10 leading-relaxed max-w-md">I'll help you search visas, navigate documents, track applications, and get eSIM data plans for your travels.</p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 w-full">
+      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 w-full">
         {suggestions.map((s, i) => (
           <button
             key={i}

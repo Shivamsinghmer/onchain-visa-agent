@@ -12,7 +12,7 @@ const StructuredInputForm = ({ fields, onSubmit, isSubmitted, disabled }) => {
 
   if (isSubmitted) {
     return (
-      <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#10B981]/10 text-[#10B981] rounded-full text-xs font-black uppercase tracking-widest animate-in fade-in zoom-in duration-500">
+      <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#10B981]/10 text-[#10B981] rounded-full text-xs font-semibold uppercase tracking-widest animate-in fade-in zoom-in duration-500">
         <span className="text-sm">✓</span> Submitted
       </div>
     );
@@ -20,7 +20,7 @@ const StructuredInputForm = ({ fields, onSubmit, isSubmitted, disabled }) => {
 
   return (
     <div className={`bg-white shadow-sm border border-gray-100 rounded-2xl p-6 w-full max-w-md animate-in fade-in slide-in-from-bottom-2 duration-500 ${disabled ? 'opacity-50 grayscale pointer-events-none' : 'hover:shadow-md'} transition-all`}>
-      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#0A1628] mb-6">Details Required</h3>
+      <h3 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#0A1628] mb-6">Details Required</h3>
       
       <div className="space-y-5">
         {fields.map((field, idx) => (

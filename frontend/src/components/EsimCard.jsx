@@ -21,20 +21,20 @@ export function EsimCard({ esim, onAction }) {
   };
 
   return (
-    <div className="flex-shrink-0 w-[260px] md:w-[280px] bg-gradient-to-br from-[#0F172A] to-[#1E293B] text-white p-5 rounded-2xl flex flex-col space-y-4 shadow-lg transition-all hover:shadow-xl hover:-translate-y-1 border border-white/10">
+    <div className="flex-shrink-0 w-[240px] sm:w-[260px] md:w-[280px] bg-gradient-to-br from-[#0F172A] to-[#1E293B] text-white p-5 rounded-2xl flex flex-col space-y-4 shadow-lg transition-all hover:shadow-xl hover:-translate-y-1 border border-white/10">
       
       {/* Top: Brand + Speed Badge */}
       <div className="w-full flex justify-between items-start">
         <div className="flex items-center gap-2">
           <span className="text-2xl">{getBrandIcon()}</span>
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-[#818CF8]">eSIM</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-[#818CF8]">eSIM</p>
             <p className="text-xs font-bold text-white/80 truncate max-w-[140px]">
               {esim.brandName || esim.brand || 'Data Plan'}
             </p>
           </div>
         </div>
-        <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/20">
+        <span className="text-[9px] font-semibold uppercase tracking-widest px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/20">
           {speedBadge}
         </span>
       </div>
@@ -44,12 +44,12 @@ export function EsimCard({ esim, onAction }) {
         <div className="flex items-end gap-3">
           <div>
             <p className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Data</p>
-            <p className="text-2xl font-black text-white leading-tight">{dataDisplay}</p>
+            <p className="text-2xl font-semibold text-white leading-tight">{dataDisplay}</p>
           </div>
           {esim.durationDays && (
             <div className="pb-0.5">
               <p className="text-[10px] font-bold text-white/40 uppercase tracking-wider">Duration</p>
-              <p className="text-lg font-black text-white/90">{esim.durationDays} days</p>
+              <p className="text-lg font-semibold text-white/90">{esim.durationDays} days</p>
             </div>
           )}
         </div>
@@ -73,19 +73,19 @@ export function EsimCard({ esim, onAction }) {
 
       {/* Price + Actions */}
       <div className="flex justify-between items-center pt-4 border-t border-white/10">
-        <span className="font-black text-[#818CF8] text-lg">
+        <span className="font-semibold text-[#818CF8] text-lg">
           {priceDisplay}
         </span>
         <div className="flex gap-2">
           <button
             onClick={() => onAction(`Show me details for eSIM offer ${esim.offerId}`)}
-            className="h-9 px-3 bg-white/10 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-wider text-white/80 hover:bg-white/20 transition-colors"
+            className="h-9 px-3 bg-white/10 border border-white/10 rounded-xl text-[10px] font-semibold uppercase tracking-wider text-white/80 hover:bg-white/20 transition-colors"
           >
             Details
           </button>
           <button
             onClick={() => onAction(`I want to buy eSIM offer ${esim.offerId}`)}
-            className="h-9 px-4 bg-[#818CF8] text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:scale-105 active:scale-95 transition-all shadow-lg shadow-[#818CF8]/30"
+            className="h-9 px-4 bg-[#818CF8] text-white rounded-xl text-[10px] font-semibold uppercase tracking-wider hover:scale-105 active:scale-95 transition-all shadow-lg shadow-[#818CF8]/30"
           >
             Buy
           </button>

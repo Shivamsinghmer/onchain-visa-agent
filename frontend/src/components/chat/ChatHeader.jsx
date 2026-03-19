@@ -9,8 +9,8 @@ const ChatHeader = ({ sidebarOpen, setSidebarOpen, rightPanelOpen, setRightPanel
           <span className="text-xl md:text-lg">☰</span>
         </button>
         <div className="flex flex-col">
-           <span className="text-sm md:text-base font-black text-[#0A1628] leading-tight tracking-tight text-gradient">Visa Advisor</span>
-           <span className="text-[9px] md:text-[10px] font-black text-[#10B981] flex items-center gap-1 leading-none uppercase tracking-widest">
+           <span className="text-sm md:text-base font-semibold text-[#0A1628] leading-tight tracking-tight text-gradient">Visa Advisor</span>
+           <span className="text-[9px] md:text-[10px] font-semibold text-[#10B981] flex items-center gap-1 leading-none uppercase tracking-widest">
              <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse"></span> Service Active
            </span>
         </div>
@@ -18,7 +18,7 @@ const ChatHeader = ({ sidebarOpen, setSidebarOpen, rightPanelOpen, setRightPanel
        <div className="flex items-center gap-2">
           <button 
            onClick={() => setRightPanelOpen(!rightPanelOpen)} 
-           className={`p-3 md:p-2 hover:bg-[#4F6EF7]/10 rounded-xl text-[10px] md:text-[11px] font-black uppercase tracking-[0.15em] text-[#4F6EF7] px-4 md:px-5 min-w-[44px] min-h-[44px] transition-all flex items-center gap-2 ${rightPanelOpen ? 'bg-[#4F6EF7]/10' : 'bg-transparent'}`}
+           className={`p-3 md:p-2 hover:bg-[#4F6EF7]/10 rounded-xl text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.15em] text-[#4F6EF7] px-4 md:px-5 min-w-[44px] min-h-[44px] transition-all flex items-center gap-2 ${rightPanelOpen ? 'bg-[#4F6EF7]/10' : 'bg-transparent'}`}
           >
             <span className="hidden md:inline">{rightPanelOpen ? 'Hide Tracker' : 'Show Tracker'}</span>
             <span className="md:hidden">📋</span>

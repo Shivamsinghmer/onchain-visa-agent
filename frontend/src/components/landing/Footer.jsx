@@ -8,7 +8,7 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto relative z-10 px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row justify-between items-center md:items-start gap-10 md:gap-8">
           <div className="flex flex-col items-center md:items-start text-center md:text-left">
-            <span className="text-xl md:text-2xl font-serif font-black tracking-tight mb-2 md:mb-3 flex items-center gap-2">
+            <span className="text-xl md:text-2xl font-serif font-semibold tracking-tight mb-2 md:mb-3 flex items-center gap-2">
               <span className="w-8 h-8 rounded-lg bg-[#0A1628] text-white flex items-center justify-center text-sm font-sans">OC</span>
               OnchainCity
             </span>
@@ -18,7 +18,7 @@ const Footer = () => {
           </div>
 
           <div className="flex flex-col items-center md:items-end gap-6 md:gap-8">
-            <div className="flex items-center gap-6 md:gap-8 text-[10px] md:text-xs font-black uppercase tracking-[0.2em] text-gray-400">
+            <div className="flex items-center gap-6 md:gap-8 text-[10px] md:text-xs font-semibold uppercase tracking-[0.2em] text-gray-400">
               <a href="#" className="hover:text-[#4F6EF7] transition-colors">Privacy</a>
               <a href="#" className="hover:text-[#4F6EF7] transition-colors">Terms</a>
               <a href="#" className="hover:text-[#4F6EF7] transition-colors">Support</a>
