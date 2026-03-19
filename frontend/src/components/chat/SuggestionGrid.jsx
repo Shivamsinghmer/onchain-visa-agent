@@ -4,7 +4,9 @@ const suggestions = [
   { label: "🔍 Search visas to Dubai", val: "Search visas to Dubai" },
   { label: "📄 What documents do I need?", val: "What documents do I need?" },
   { label: "📋 Check my application status", val: "Check my application status" },
-  { label: "🌍 Show popular destinations", val: "Show popular destinations" }
+  { label: "🌍 Show popular destinations", val: "Show popular destinations" },
+  { label: "📶 Get eSIM for Japan", val: "I need an eSIM data plan for Japan" },
+  { label: "📱 eSIM plans for Dubai", val: "Show me eSIM plans for Dubai" }
 ];
 
 const SuggestionGrid = ({ handleSend }) => {
@@ -12,9 +14,9 @@ const SuggestionGrid = ({ handleSend }) => {
     <div className="min-h-full flex flex-col items-center justify-center text-center max-w-2xl mx-auto py-8 md:py-12 px-6 overflow-y-auto">
       <span className="text-5xl md:text-7xl mb-4 md:mb-6 ">✈️</span>
       <h2 className="text-2xl md:text-3xl font-serif font-black text-[#0A1628] mb-3 md:mb-4 tracking-tight leading-tight">Your OnchainCity Visa Advisor</h2>
-      <p className="text-sm md:text-base text-[#6B7280] font-medium mb-8 md:mb-10 leading-relaxed max-w-md">I'll help you search visas, navigate documents, and track your global applications in real-time.</p>
+      <p className="text-sm md:text-base text-[#6B7280] font-medium mb-8 md:mb-10 leading-relaxed max-w-md">I'll help you search visas, navigate documents, track applications, and get eSIM data plans for your travels.</p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 w-full">
         {suggestions.map((s, i) => (
           <button
             key={i}

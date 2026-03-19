@@ -17,6 +17,8 @@ const ChatInterface = () => {
     clearChat,
     applications,
     visas,
+    esimOffers,
+    esimPurchases,
     userEmail,
     showOTP,
     setShowOTP,
@@ -160,7 +162,8 @@ const ChatInterface = () => {
           rightPanelOpen={rightPanelOpen} 
           setRightPanelOpen={setRightPanelOpen}
           activeApplications={applications} 
-          activeVisas={visas} 
+          activeVisas={visas}
+          esimPurchases={esimPurchases}
         />
       </div>
 

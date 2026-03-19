@@ -1,4 +1,4 @@
-const RightPanel = ({ rightPanelOpen, activeApplications, activeVisas, setRightPanelOpen }) => {
+const RightPanel = ({ rightPanelOpen, activeApplications, activeVisas, esimPurchases = [], setRightPanelOpen }) => {
   return (
     <aside className="h-full w-80 bg-white border-l border-gray-100 flex flex-col overflow-hidden shrink-0 relative">
       {/* Mobile Close Button */}
@@ -78,6 +78,57 @@ const RightPanel = ({ rightPanelOpen, activeApplications, activeVisas, setRightP
               </>
             )}
           </div>
+        </div>
+
+        {/* eSIM PURCHASES */}
+        <div>
+          <div className="flex justify-between items-center mb-6">
+            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#0A1628]">eSIM Plans</h4>
+            <span className="bg-indigo-50 text-[#818CF8] text-[10px] font-black px-2 py-0.5 rounded-full border border-indigo-100">
+              {esimPurchases.length}
+            </span>
+          </div>
+          {esimPurchases.length > 0 ? (
+            <div className="space-y-3">
+              {esimPurchases.map((purchase, i) => (
+                <div key={i} className="p-4 rounded-2xl bg-gradient-to-br from-[#0F172A] to-[#1E293B] text-white shadow-sm transition-transform hover:scale-[1.02]">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">📶</span>
+                      <p className="text-[10px] font-black text-white/80 uppercase tracking-wider">eSIM</p>
+                    </div>
+                    <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${
+                      purchase.status?.toLowerCase() === 'done' 
+                        ? 'bg-emerald-500/20 text-emerald-400' 
+                        : purchase.status?.toLowerCase() === 'failed'
+                          ? 'bg-red-500/20 text-red-400'
+                          : 'bg-amber-500/20 text-amber-400'
+                    }`}>
+                      {purchase.status || 'Pending'}
+                    </span>
+                  </div>
+                  <p className="text-[9px] font-mono text-white/50 truncate">
+                    ID: {purchase.transactionId}
+                  </p>
+                  {purchase.activationCode && (
+                    <div className="mt-2 p-2 rounded-lg bg-white/10 border border-white/5">
+                      <p className="text-[9px] font-bold text-emerald-400">✅ Activated</p>
+                      <p className="text-[8px] font-mono text-white/60 truncate mt-0.5">
+                        ICCID: {purchase.iccid}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-6 rounded-3xl bg-gradient-to-br from-[#0F172A]/5 to-[#1E293B]/5 border border-indigo-50/50 text-center flex flex-col items-center">
+              <span className="text-2xl mb-2">📱</span>
+              <p className="text-[11px] font-bold text-[#6B7280] leading-tight max-w-[140px]">
+                Ask for an eSIM data plan for your destination
+              </p>
+            </div>
+          )}
         </div>
 
         {/* HELP CENTER LINKS */}

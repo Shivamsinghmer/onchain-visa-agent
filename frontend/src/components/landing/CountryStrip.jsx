@@ -17,7 +17,7 @@ const CountryStrip = () => {
   return (
     <div className="w-full bg-white py-8 border-y border-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.3em] text-gray-400 text-center mb-6">Popular Destinations</p>
+        <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.3em] text-gray-400 text-center mb-6">Visa & eSIM Destinations</p>
         <div className="flex overflow-x-auto gap-8 md:gap-12 pb-2 scrollbar-hide px-4 justify-start md:justify-center no-wrap">
           {countries.map((c, i) => (
             <div key={i} className="flex items-center gap-3 shrink-0 group cursor-pointer transition-all hover:scale-105">

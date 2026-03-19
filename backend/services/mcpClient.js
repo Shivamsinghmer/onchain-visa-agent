@@ -26,7 +26,8 @@ export async function getMcpClient() {
     env: {
       ...process.env,
       ONCHAIN_API_KEY: process.env.ONCHAIN_API_KEY,
-      ONCHAIN_API_URL: process.env.ONCHAIN_API_URL
+      ONCHAIN_API_URL: process.env.ONCHAIN_API_URL,
+      ZENDIT_API_KEY: process.env.ZENDIT_API_KEY
     }
   });
 

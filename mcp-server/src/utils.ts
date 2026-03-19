@@ -96,3 +96,37 @@ export function err(message: string) {
     isError: true
   };
 }
+
+// ── Zendit API helper ─────────────────────────────────────────────────────────
+const ZENDIT_API_KEY = process.env.ZENDIT_API_KEY || "";
+const ZENDIT_BASE_URL = "https://api.zendit.io/v1";
+
+export async function zenditRequest(
+  endpoint: string,
+  method: string = "GET",
+  body?: any
+) {
+  const fullUrl = ZENDIT_BASE_URL + endpoint;
+  const headers: any = {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer " + ZENDIT_API_KEY
+  };
+
+  console.error(`[ZENDIT] ${method} ${fullUrl}`);
+
+  const response = await fetch(fullUrl, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined
+  });
+
+  console.error(`[ZENDIT] Status: ${response.status}`);
+
+  const data = await response.json() as any;
+  if (!response.ok) {
+    throw new Error(
+      `Zendit Error (${response.status}): ${data.message || JSON.stringify(data)}`
+    );
+  }
+  return data;
+}

@@ -24,6 +24,12 @@ import {
   checkPaymentStatus,
   getUserProfile
 } from "./tools/payments.js";
+import {
+  searchEsimOffers,
+  getEsimOfferDetails,
+  purchaseEsim,
+  getEsimPurchaseStatus
+} from "./tools/esim.js";
 
 const server = new Server(
   { name: "onchain-visa", version: "1.0.0" },
@@ -180,6 +186,46 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
       name: "get_user_profile",
       description: "Get the authenticated user's profile",
       inputSchema: { type: "object", properties: {} }
+    },
+
+    // eSIM
+    {
+      name: "search_esim_offers",
+      description: "Search eSIM data plans for a travel destination. Pass country name or city — it converts automatically to ISO code. Returns plans with data allowance, duration, price, and speeds.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          country: { type: "string", description: "Country name or city e.g. 'Dubai', 'Japan', 'UAE'" },
+          regions: { type: "string", description: "Optional region e.g. 'Asia', 'Middle East and North Africa'" }
+        }
+      }
+    },
+    {
+      name: "get_esim_offer_details",
+      description: "Get full pricing and details of a specific eSIM offer by ID",
+      inputSchema: {
+        type: "object",
+        properties: { offerId: { type: "string" } },
+        required: ["offerId"]
+      }
+    },
+    {
+      name: "purchase_esim",
+      description: "Purchase an eSIM plan. Call ONLY after user says 'buy' or explicitly confirms. Returns transactionId to track status.",
+      inputSchema: {
+        type: "object",
+        properties: { offerId: { type: "string" } },
+        required: ["offerId"]
+      }
+    },
+    {
+      name: "get_esim_purchase_status",
+      description: "Check eSIM purchase status. When DONE, returns activationCode, smdpAddress, and iccid for device setup.",
+      inputSchema: {
+        type: "object",
+        properties: { transactionId: { type: "string" } },
+        required: ["transactionId"]
+      }
     }
   ]
 }));
@@ -206,6 +252,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case "create_payment":          return await createPayment(args.applicationId, args.amount);
       case "check_payment_status":    return await checkPaymentStatus(args.paymentIntentId || args.paymentId);
       case "get_user_profile":        return await getUserProfile();
+      case "search_esim_offers":      return await searchEsimOffers(args);
+      case "get_esim_offer_details":  return await getEsimOfferDetails(args.offerId);
+      case "purchase_esim":           return await purchaseEsim(args.offerId);
+      case "get_esim_purchase_status": return await getEsimPurchaseStatus(args.transactionId);
       default:
         throw new Error(`Unknown tool: ${name}`);
     }

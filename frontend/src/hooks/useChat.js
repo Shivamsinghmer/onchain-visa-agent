@@ -9,6 +9,8 @@ export function useChat() {
   const [showOTP, setShowOTP] = useState(false);
   const [applications, setApplications] = useState([]);
   const [visas, setVisas] = useState([]);
+  const [esimOffers, setEsimOffers] = useState([]);
+  const [esimPurchases, setEsimPurchases] = useState([]);
   const [userEmail, setUserEmail] = useState(null);
   const [pendingEmail, setPendingEmail] = useState(null);
   const [sessionId, setSessionId] = useState(
@@ -265,6 +267,38 @@ export function useChat() {
                       }
                     }
 
+                    // eSIM tool results
+                    if (event.name === 'search_esim_offers') {
+                      const offers = parsedResult.data || [];
+                      if (Array.isArray(offers) && offers.length > 0) {
+                        setEsimOffers(offers);
+                        setMessages(prev => prev.map(m => m.id === assistantMsgId ? { ...m, esimOffers: offers } : m));
+                      }
+                    }
+
+                    if (event.name === 'purchase_esim' || event.name === 'get_esim_purchase_status') {
+                      const purchaseData = parsedResult.data || parsedResult;
+                      if (purchaseData && (purchaseData.transactionId || parsedResult.transactionId)) {
+                        const purchase = {
+                          transactionId: parsedResult.transactionId || purchaseData.transactionId,
+                          status: parsedResult.status || purchaseData.status || 'pending',
+                          activationCode: parsedResult.activationCode || purchaseData.confirmation?.activationCode,
+                          smdpAddress: parsedResult.smdpAddress || purchaseData.confirmation?.smdpAddress,
+                          iccid: parsedResult.iccid || purchaseData.confirmation?.iccid,
+                          createdAt: new Date().toISOString()
+                        };
+                        setEsimPurchases(prev => {
+                          const exists = prev.findIndex(p => p.transactionId === purchase.transactionId);
+                          if (exists >= 0) {
+                            const updated = [...prev];
+                            updated[exists] = purchase;
+                            return updated;
+                          }
+                          return [...prev, purchase];
+                        });
+                      }
+                    }
+
                     if (event.name === 'verify_otp') {
                       if (parsedResult.success || parsedResult.token) {
                         const url = sessionId 
@@ -323,6 +357,8 @@ export function useChat() {
       setMessages([]);
       setApplications([]);
       setVisas([]);
+      setEsimOffers([]);
+      setEsimPurchases([]);
       setUserEmail(null);
       setSessionId(null);
       localStorage.removeItem('ocity_session_id');
@@ -341,6 +377,8 @@ export function useChat() {
     setShowOTP,
     applications,
     visas,
+    esimOffers,
+    esimPurchases,
     userEmail,
     pendingEmail,
     sessionId,

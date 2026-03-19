@@ -13,7 +13,7 @@ const Footer = () => {
               OnchainCity
             </span>
             <p className="text-gray-500 text-sm font-medium max-w-xs">
-              Revolutionizing visa applications with AI. The fastest way to your next destination.
+              Revolutionizing visa applications and travel connectivity with AI. Visas and eSIM data plans, all in one place.
             </p>
           </div>
 

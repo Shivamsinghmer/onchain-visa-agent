@@ -1,6 +1,7 @@
 import React from 'react';
 import { VisaCard } from '../VisaCard.jsx';
 import { ApplicationCard } from '../ApplicationCard.jsx';
+import { EsimCard } from '../EsimCard.jsx';
 import StructuredInputForm from './StructuredInputForm.jsx';
 
 const MessageList = ({ messages, isStreaming, activeToolCall, handleSend, messagesEndRef, submittedForms, setSubmittedForms, dismissedForms }) => {
@@ -57,6 +58,16 @@ const MessageList = ({ messages, isStreaming, activeToolCall, handleSend, messag
               <div className="flex flex-col gap-3 mt-6">
                 {m.applications.map((app, i) => (
                   <ApplicationCard key={i} application={app} onAction={handleSend} />
+                ))}
+              </div>
+            )}
+
+            {m.esimOffers && m.esimOffers.length > 0 && (
+              <div className="flex overflow-x-auto gap-6 mt-8 pb-4 -mx-4 scrollbar-hide snap-x">
+                {m.esimOffers.map((esim, i) => (
+                  <div key={i} className="snap-center transform hover:scale-[1.02] transition-transform duration-500">
+                    <EsimCard esim={esim} onAction={handleSend} />
+                  </div>
                 ))}
               </div>
             )}
