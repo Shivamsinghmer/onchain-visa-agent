@@ -1,92 +1,54 @@
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
 dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const WRAPPER_URL = process.env.MCP_WRAPPER_URL || 'http://localhost:3002/run';
 
-let mcpClient = null;
 let mcpToolsCache = null;
 
-export async function getMcpClient() {
-  if (mcpClient) return mcpClient;
+/**
+ * Executes an MCP JSON-RPC request via the HTTP wrapper service.
+ */
+async function executeMcpRequest(method, params = {}) {
+  try {
+    console.log(`[Backend MCP] Calling wrapper: ${method}`);
+    const response = await fetch(WRAPPER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ method, params })
+    });
 
-  const mcpServerPath = process.env.MCP_SERVER_PATH || '../../mcp-server/dist/index.js';
-  const serverPath = path.resolve(__dirname, '..', mcpServerPath);
-
-  console.log(`[MCP Client] Spawning MCP server at: ${serverPath}`);
-
-  const transport = new StdioClientTransport({
-    command: 'node',
-    args: [serverPath],
-    env: {
-      ...process.env,
-      ONCHAIN_API_KEY: process.env.ONCHAIN_API_KEY,
-      ONCHAIN_API_URL: process.env.ONCHAIN_API_URL,
-      ZENDIT_API_KEY: process.env.ZENDIT_API_KEY
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Wrapper error (${response.status}): ${errorText}`);
     }
-  });
 
-  const client = new Client(
-    { name: 'mcp-client', version: '1.0.0' },
-    { capabilities: {} }
-  );
-
-  // Connection with timeout
-  const connectPromise = client.connect(transport);
-  const timeoutPromise = new Promise((_, reject) => 
-    setTimeout(() => reject(new Error('MCP connection timeout')), 10000)
-  );
-
-  try {
-    await Promise.race([connectPromise, timeoutPromise]);
-    console.log('MCP Client connected successfully.');
-  } catch (error) {
-    console.error('Failed to connect to MCP server:', error);
-    throw error;
-  }
-
-  mcpClient = client;
-
-  transport.onclose = () => {
-    console.warn('MCP transport closed. Reconnecting on next request...');
-    mcpClient = null;
-    // We keep mcpToolsCache to avoid failing completely if MCP is down
-  };
-
-  transport.onerror = (error) => {
-    console.error('MCP transport error:', error);
-  };
-
-  try {
-    const toolsList = await mcpClient.listTools();
-    console.log(`MCP Client discovered ${toolsList.tools.length} tools.`);
+    const data = await response.json();
+    if (data.error) {
+        throw new Error(`MCP Error: ${data.error.message || JSON.stringify(data.error)}`);
+    }
+    return data.result;
   } catch (err) {
-    console.error('Failed to list tools during connection:', err);
+    console.error(`[Backend MCP] Failed to execute ${method}:`, err.message);
+    throw err;
   }
-
-  return mcpClient;
 }
 
+/**
+ * Returns available MCP tools in a format suitable for the AI model (Groq).
+ */
 export async function getMcpToolsForGroq() {
   if (mcpToolsCache) return mcpToolsCache;
 
   try {
-    const client = await getMcpClient();
+    const result = await executeMcpRequest('tools/list');
     
-    // listTools with timeout
-    const listToolsPromise = client.listTools();
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('MCP listTools timeout')), 5000)
-    );
+    if (!result || !result.tools) {
+        console.warn('[Backend MCP] No tools returned from MCP server');
+        return [];
+    }
 
-    const listToolsResult = await Promise.race([listToolsPromise, timeoutPromise]);
-
-    mcpToolsCache = listToolsResult.tools.map(tool => ({
+    mcpToolsCache = result.tools.map(tool => ({
       type: 'function',
       function: {
         name: tool.name,
@@ -94,35 +56,50 @@ export async function getMcpToolsForGroq() {
         parameters: tool.inputSchema || { type: 'object', properties: {} }
       }
     }));
+    
+    console.log(`[Backend MCP] Discovered ${mcpToolsCache.length} tools`);
+    return mcpToolsCache;
   } catch (err) {
-    console.error('Failed to get tools from MCP. Continuing without tools.', err);
-    return []; // Return empty tools instead of hanging
+    console.error('[Backend MCP] Failed to fetch tools. Using empty list.');
+    return [];
   }
-
-  return mcpToolsCache;
 }
 
+/**
+ * Calls a specific tool on the MCP server via the wrapper.
+ */
 export async function callMcpTool(toolName, toolArgs) {
-  const client = await getMcpClient();
   try {
-    const result = await client.callTool({
+    const result = await executeMcpRequest('tools/call', {
       name: toolName,
       arguments: toolArgs || {}
     });
-    
-    console.log(`[MCP Client] Data received from MCP server for tool "${toolName}":`, JSON.stringify(result, null, 2));
-    
-    // Extract text content from result
+
+    console.log(`[Backend MCP] Result for "${toolName}":`, JSON.stringify(result, null, 2));
+
+    // Extract text content from MCP result format
     if (result && result.content && Array.isArray(result.content)) {
-      const textContents = result.content
+      return result.content
         .filter(c => c.type === 'text')
         .map(c => c.text)
         .join('\n');
-      return textContents;
     }
     return JSON.stringify(result);
   } catch (err) {
-    console.error(`Error calling MCP tool ${toolName}:`, err);
-    return JSON.stringify({ error: err.message || 'Unknown tool execution error' });
+    console.error(`[Backend MCP] Tool execution error for "${toolName}":`, err.message);
+    return JSON.stringify({ error: err.message });
   }
+}
+
+/**
+ * Placeholder for compatibility with existing code that might call getMcpClient()
+ */
+export async function getMcpClient() {
+    // We no longer return a direct MCP Client instance, 
+    // but we can return an object that mimics basic functionally if needed.
+    // However, the new architecture uses getMcpToolsForGroq and callMcpTool directly.
+    return {
+        listTools: () => executeMcpRequest('tools/list'),
+        callTool: (params) => executeMcpRequest('tools/call', params)
+    };
 }

@@ -238,24 +238,24 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   try {
     switch (name) {
-      case "send_otp":                return await sendOtp(args.email);
-      case "verify_otp":              return await verifyOtp(args.email, args.code);
-      case "search_visas":            return await searchVisas(args);
-      case "get_featured_visas":      return await getFeaturedVisas();
-      case "get_visa_categories":     return await getVisaCategories();
+      case "send_otp": return await sendOtp(args.email);
+      case "verify_otp": return await verifyOtp(args.email, args.code);
+      case "search_visas": return await searchVisas(args);
+      case "get_featured_visas": return await getFeaturedVisas();
+      case "get_visa_categories": return await getVisaCategories();
       case "get_destination_countries": return await getDestinationCountries();
-      case "get_visa_details":        return await getVisaDetails(args.visaId);
-      case "get_visa_pricing":        return await getVisaPricing(args.visaId);
-      case "get_required_documents":  return await getRequiredDocuments(args.visaId);
-      case "list_applications":       return await listApplications();
+      case "get_visa_details": return await getVisaDetails(args.visaId);
+      case "get_visa_pricing": return await getVisaPricing(args.visaId);
+      case "get_required_documents": return await getRequiredDocuments(args.visaId);
+      case "list_applications": return await listApplications();
       case "check_application_status": return await checkApplicationStatus(args.applicationId);
-      case "submit_application":      return await submitApplication(args);
-      case "create_payment":          return await createPayment(args.applicationId, args.amount);
-      case "check_payment_status":    return await checkPaymentStatus(args.paymentIntentId || args.paymentId);
-      case "get_user_profile":        return await getUserProfile();
-      case "search_esim_offers":      return await searchEsimOffers(args);
-      case "get_esim_offer_details":  return await getEsimOfferDetails(args.offerId);
-      case "purchase_esim":           return await purchaseEsim(args.offerId);
+      case "submit_application": return await submitApplication(args);
+      case "create_payment": return await createPayment(args.applicationId, args.amount);
+      case "check_payment_status": return await checkPaymentStatus(args.paymentIntentId || args.paymentId);
+      case "get_user_profile": return await getUserProfile();
+      case "search_esim_offers": return await searchEsimOffers(args);
+      case "get_esim_offer_details": return await getEsimOfferDetails(args.offerId);
+      case "purchase_esim": return await purchaseEsim(args.offerId);
       case "get_esim_purchase_status": return await getEsimPurchaseStatus(args.transactionId);
       default:
         throw new Error(`Unknown tool: ${name}`);
