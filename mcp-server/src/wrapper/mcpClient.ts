@@ -1,43 +1,35 @@
-import { spawn } from 'child_process';
+import { spawn, ChildProcess } from 'child_process';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import readline from 'readline';
 import queue from './queue.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { Writable, Readable } from 'stream';
 
 class McpClient {
+  private child: ChildProcess | null = null;
+  private MCP_PATH: string;
+  private pendingRequests: Map<number, { resolve: (val: any) => void; reject: (err: Error) => void }> = new Map();
+  private requestId: number = 0;
+
   constructor() {
-    this.mcpProcess = null;
-    this.mcpPath = process.env.MCP_PATH || '../dist/index.js';
-    this.fullMcpPath = path.resolve(__dirname, this.mcpPath);
-    this.pendingRequests = new Map();
-    this.requestId = 0;
-    this.isReady = false;
+    this.MCP_PATH = process.env.MCP_PATH || "dist/index.js";
   }
 
   /**
-   * Spawns the MCP server as a child process if it's not already running.
+   * Spawns the persistent MCP process ONLY ONCE.
    */
-  async spawnProcess() {
-    if (this.mcpProcess) return;
+  public startMCP(): void {
+    if (this.child) return;
 
-    console.log(`[MCP Wrapper] Spawning persistent MCP process at: ${this.fullMcpPath}`);
+    console.log(`[MCP Wrapper] Spawning persistent MCP process at: ${this.MCP_PATH}`);
     
-    this.mcpProcess = spawn('node', [this.fullMcpPath], {
+    this.child = spawn("node", [this.MCP_PATH], {
       stdio: ['pipe', 'pipe', 'inherit'],
-      env: { 
-        ...process.env,
-        // Ensure any needed API keys are passed through
-        ONCHAIN_API_KEY: process.env.ONCHAIN_API_KEY,
-        ONCHAIN_API_URL: process.env.ONCHAIN_API_URL,
-        ZENDIT_API_KEY: process.env.ZENDIT_API_KEY
-      }
+      env: { ...process.env }
     });
 
+    const stdout = this.child.stdout as Readable;
     const rl = readline.createInterface({
-      input: this.mcpProcess.stdout,
+      input: stdout,
       terminal: false
     });
 
@@ -51,31 +43,31 @@ class McpClient {
           handler.resolve(response);
           this.pendingRequests.delete(response.id);
         }
-      } catch (err) {
-        console.error('[MCP Wrapper] Failed to parse MCP stdout line:', line, err.message);
+      } catch (err: any) {
+         // Silently ignore if it's not JSON (to handle logs/stdout from the black-box server if any)
+         if (!line.includes('[dotenv')) {
+            console.log(`[MCP Stdout] ${line}`);
+         }
       }
     });
 
-    this.mcpProcess.on('exit', (code) => {
+    this.child.on('exit', (code) => {
       console.warn(`[MCP Wrapper] MCP process exited with code ${code}. Restarting...`);
-      this.mcpProcess = null;
-      this.isReady = false;
-      this.spawnProcess();
+      this.child = null;
+      this.startMCP();
     });
 
-    this.mcpProcess.on('error', (err) => {
+    this.child.on('error', (err) => {
       console.error('[MCP Wrapper] MCP process error:', err);
     });
-
-    this.isReady = true;
   }
 
   /**
-   * Sends a request to the MCP server and waits for a response.
-   * Serialized via the queue.
+   * Executes a request via the persistent child process.
+   * Serialized via the shared queue.
    */
-  async execute(requestData) {
-    if (!this.mcpProcess) await this.spawnProcess();
+  async execute(requestData: any): Promise<any> {
+    if (!this.child) this.startMCP();
 
     return queue.add(async () => {
       return new Promise((resolve, reject) => {
@@ -84,7 +76,6 @@ class McpClient {
         
         console.log(`[MCP Wrapper] Sending request ID: ${id}, Method: ${request.method}`);
 
-        // Set timeout
         const timeout = setTimeout(() => {
           if (this.pendingRequests.has(id)) {
             this.pendingRequests.delete(id);
@@ -93,14 +84,15 @@ class McpClient {
         }, 10000);
 
         this.pendingRequests.set(id, { 
-          resolve: (val) => {
+          resolve: (val: any) => {
             clearTimeout(timeout);
             resolve(val);
           }, 
           reject 
         });
 
-        const success = this.mcpProcess.stdin.write(JSON.stringify(request) + '\n');
+        const stdin = this.child!.stdin as Writable;
+        const success = stdin.write(JSON.stringify(request) + '\n');
         if (!success) {
           clearTimeout(timeout);
           this.pendingRequests.delete(id);
